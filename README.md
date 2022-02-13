@@ -72,11 +72,11 @@ pub fn once_atlas_loaded(
     mut manifests: Res<Assets<HeterogeneousTextureAtlasManifest>>,
 ) {
     for event in events {
-        let manifest = manifests.get(&event.0).unwrap();
+        let manifest = manifests.get(&event.manifest).unwrap();
         commands
         .spawn_bundle(SpriteSheetBundle {
             sprite: TextureAtlasSprite::new(manifest.get("face")),
-            texture_atlas: manifest.atlas.clone(),
+            texture_atlas: event.atlas.clone(),
             ..Default::default()
         });
     }

@@ -107,8 +107,11 @@ pub fn heterogeneous_atlas_manifest_events_handler(
                         manifest.indices.insert(name.clone(), index);
                     }
                     let atlas_handle = atlases.add(atlas);
-                    manifest.atlas = atlas_handle;
-                    event_writer.send(HeterogeneousTextureAtlasLoadedEvent(manifest_handle));
+                    manifest.atlas = atlas_handle.clone();
+                    event_writer.send(HeterogeneousTextureAtlasLoadedEvent { 
+                        manifest: manifest_handle, 
+                        atlas: atlas_handle 
+                    });
                 }
             },
             _ => {}
@@ -117,7 +120,10 @@ pub fn heterogeneous_atlas_manifest_events_handler(
 }
 
 #[derive(Component)]
-pub struct HeterogeneousTextureAtlasLoadedEvent(pub Handle<HeterogeneousTextureAtlasManifest>);
+pub struct HeterogeneousTextureAtlasLoadedEvent {
+    pub manifest: Handle<HeterogeneousTextureAtlasManifest>, 
+    pub atlas: Handle<TextureAtlas>,
+}
 
 pub struct HeterogeneousTextureAtlasLoaderPlugin;
 
