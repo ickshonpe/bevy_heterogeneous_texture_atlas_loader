@@ -1,99 +1,118 @@
 # Bevy Heterogenous Texture Atlas Loader
 
-Load heterogenous texture atlases according to a RON file manifest.  
-  
+Bevy Heterogenous Texture Atlas Loader allows you to load heterogenous texture atlases according to a RON file manifest.  
   
 
 # Example
 
-## Problem
-You have a beautiful sprite sheet `example.png` for your game:
+We have a beautiful sprite sheet `example.png` for our game:
 
  ![/assets/example.png](/assets/example.png)
 
-You want to load it into Bevy but the sprites are all different sizes.  
+But oh no the sprites are heterogeneous, how to load it?.
   
 
 
 ## Solution
 
-### You create a `manifest.ron` manifest file 
+Use the Bevy Heterogenous Texture Atlas Loader.
+
+1. Create a `manifest.ron` manifest file
 
 ```
 (
     path: "example.png",
     rects: [
-        ("yellow", 16, 64, 19, 67),
-        ("face", 93, 125, 108, 139),
-        ("patches", 176, 196, 34, 68),
+        ("rothko", 16, 64, 19, 67),
+        ("handsome face", 93, 125, 108, 139),
+        ("cyan and peaches", 176, 196, 34, 68),
     ]
 )
 ```
 * You can call the manifest anything you like, not only `manifest.ron`.
 * The `path` is relative to the root assets directory, not to the manifest file.
 * The `rects` coords are in order min_x, max_x, min_y, max_y.
-* `rects` is a list not a map to preserve ordering. For this example, in the output texture atlas "yellow" will be texture index 0,
-    "face" will be texture index 1, and "patches" will be texture index 2, the same order as in the manifest file.  
+* `rects` is a list not a map to preserve ordering. The sprite indices in the text atlas are ordered implicitly according to the order of the rects list.
+* If you don't need to look up the sprites by name, use an empty string:
+```
+    rects: [
+        ("", 16, 64, 19, 67),
+        ...
+```
 
-  
-
-
-### Add the bevy heterogeneous texture atlas loader to your Cargo.toml `[dependencies]`
+2. Add dependencies to your `Cargo.toml`
 
 ```
-bevy_heterogeneous_texture_atlas_loader = { github = "https://github.com/ickshonpe/bevy_heterogeneous_texture_atlas_loader" }
+[dependencies]
+bevy = "0.6"
+bevy_heterogeneous_texture_atlas_loader = "0.1.2"
 ```
-### Add the Plugin to your Bevy App
+
+
+3. Write the app
+
+
 ```rust
-use heterogeneous_texture_atlas_loader::*;
-pub main() {
-    let app = App::new();
+use bevy::prelude::*;
+use bevy_heterogeneous_texture_atlas_loader::*;
 
-    ...
-
-    .add_plugin(HeterogeneousTextureAtlasLoaderPlugin);
-}
-```
-
-### Load the manifest using the AssetServer in a startup system
-```rust
-pub fn setup(
+fn setup(
+    mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) {
- let _manifest: Handle<HeterogeneousTextureAtlasManifest> = asset_server.load("manifest.ron");
+    commands.spawn_bundle(OrthographicCameraBundle::new_2d());
+    let manifest: Handle<HeterogeneousTextureAtlasManifest> = asset_server.load("manifest.ron");
+    commands.insert_resource(manifest);
 }
-```
 
-### Plugin sends an event once the TextureAtlas is ready
-```rust
-pub fn once_atlas_loaded(
+fn on_atlas_loaded(
     mut commands: Commands,
     mut events: EventReader<HeterogeneousTextureAtlasLoadedEvent>,
-    mut manifests: Res<Assets<HeterogeneousTextureAtlasManifest>>,
+    atlases: Res<Assets<TextureAtlas>>,
 ) {
-    for event in events {
-        let manifest = manifests.get(&event.manifest).unwrap();
+    for event in events.iter() {
+        let atlas = atlases.get(&event.atlas).unwrap();
         commands
-        .spawn_bundle(SpriteSheetBundle {
-            sprite: TextureAtlasSprite::new(manifest.get("face")),
-            texture_atlas: event.atlas.clone(),
+        .spawn_bundle(SpriteBundle {
+            texture: atlas.texture.clone(),
             ..Default::default()
         });
+        for i in 0..3 {
+            let target = -200. * Vec3::X + (100. * i as f32 - 100.) * Vec3::Y;
+            commands
+            .spawn_bundle(SpriteSheetBundle {
+                sprite: TextureAtlasSprite::new(i),
+                texture_atlas: event.atlas.clone(),
+                transform: Transform::from_translation(target),
+                ..Default::default()
+            });
+        }
     }
 }
+
+fn main() {
+    App::new()
+    .add_plugins(DefaultPlugins)
+    .add_plugin(HeterogeneousTextureAtlasLoaderPlugin)
+    .add_startup_system(setup)
+    .add_system(on_atlas_loaded)
+    .run();
+}
 ```
+4. Result, lovely
+
+ ![/assets/example.png](/assets/beautiful.png)
+
+
 #
 ### FAQ
-Can I use this with bevy_asset_loader?
+#### Can I use this with bevy_asset_loader?
 > I wish
+#### "Manifest not found"?
+> You need to store a strong handle to the manifest in a resource or something,
+otherwise it will be dropped before the texture atlas is created.
+#### Why are the names for everything so long?
+> Shorter than "**Bevy Heterogenous Texture Atlas Ron Manifest Asynchronous Loader**"
 
-Why are the names of everything so long?  
-> lols
-
-Crash during loading?
-> There might be a scheduling bug. Not fixed
-
-Example doesn't work?
-> Not tested
 
 

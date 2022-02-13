@@ -47,7 +47,6 @@ impl AssetLoader for HeterogeneousTextureAtlasManifestLoader {
                     }
                 ))
                 .collect();
-            sprite_rects.iter().for_each(|x| println!("{:?}", x));
             let manifest = HeterogeneousTextureAtlasManifest {
                 path,
                 atlas: Handle::default(),
@@ -64,13 +63,13 @@ impl AssetLoader for HeterogeneousTextureAtlasManifestLoader {
     }
 }
 
-pub fn heterogeneous_atlas_manifest_events_handler(
+pub fn heterogeneous_texture_atlas_manifest_events_handler(
     mut local: Local<HashMap<Handle<Image>, Handle<HeterogeneousTextureAtlasManifest>>>,
     mut manifest_events: EventReader<AssetEvent<HeterogeneousTextureAtlasManifest>>,
     mut image_events: EventReader<AssetEvent<Image>>,
     asset_server: Res<AssetServer>,
     mut manifestos: ResMut<Assets<HeterogeneousTextureAtlasManifest>>,
-    images: Res<Assets<Image>>,
+    mut images: ResMut<Assets<Image>>,
     mut atlases: ResMut<Assets<TextureAtlas>>,
     mut event_writer: EventWriter<HeterogeneousTextureAtlasLoadedEvent>,
 ) {
@@ -78,9 +77,9 @@ pub fn heterogeneous_atlas_manifest_events_handler(
     for event in manifest_events.iter() {
         match event {
             AssetEvent::Created { handle: manifest_handle } => {
-                let manifest = manifestos.get_mut(manifest_handle).unwrap();
+                let manifest = manifestos.get_mut(manifest_handle).expect("Manifest asset not found.");
                 let image_handle: Handle<Image> = asset_server.load(&manifest.path);
-                image_map.insert(image_handle.clone_weak(), manifest_handle.clone_weak());
+                image_map.insert(image_handle, manifest_handle.clone());
             },
             _ => {},
         }
@@ -91,23 +90,29 @@ pub fn heterogeneous_atlas_manifest_events_handler(
     for event in image_events.iter() {
         match event {
             AssetEvent::Created { handle: image_handle } => {
-                if let Some(manifest_handle) = image_map.remove(image_handle) {
-                    let manifest = manifestos.get_mut(&manifest_handle).unwrap();
-                    let image = images.get(image_handle).unwrap();
+                if let Some(mut manifest_handle) = image_map.remove(image_handle) {
+                    let mut image_handle = image_handle.clone();
+                    image_handle.make_strong(&mut images);
+                    let manifest = manifestos.get_mut(&manifest_handle).expect("Manifest asset not found.");
+                    
+                    let image = images.get(&image_handle).expect("Image asset not found.");
                     let image_dimensions = Vec2::new(
                         image.texture_descriptor.size.width as f32,
                         image.texture_descriptor.size.height as f32
-                    );
+                    );                    
                     let mut atlas = TextureAtlas::new_empty(
                         image_handle.clone(),
                         image_dimensions
                     );
                     for (name, sprite_rect) in manifest.sprite_rects.iter() {
                         let index = atlas.add_texture(*sprite_rect);
-                        manifest.indices.insert(name.clone(), index);
+                        if name != "" {
+                            manifest.indices.insert(name.clone(), index);
+                        }
                     }
                     let atlas_handle = atlases.add(atlas);
                     manifest.atlas = atlas_handle.clone();
+                    manifest_handle.make_strong(&mut manifestos);
                     event_writer.send(HeterogeneousTextureAtlasLoadedEvent { 
                         manifest: manifest_handle, 
                         atlas: atlas_handle 
@@ -133,6 +138,9 @@ impl Plugin for HeterogeneousTextureAtlasLoaderPlugin {
         .add_event::<HeterogeneousTextureAtlasLoadedEvent>()
         .add_asset::<HeterogeneousTextureAtlasManifest>()
         .init_asset_loader::<HeterogeneousTextureAtlasManifestLoader>()
-        .add_system(heterogeneous_atlas_manifest_events_handler);
+        .add_system_to_stage(
+            CoreStage::PreUpdate,
+            heterogeneous_texture_atlas_manifest_events_handler
+        );
     }
 }

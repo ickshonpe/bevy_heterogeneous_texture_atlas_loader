@@ -1,7 +1,7 @@
 (
     path: "example.png",
     rects: [
-        ("yellow", 16, 64, 19, 67),
+        ("yellow", 17, 64, 19, 67),
         ("face", 93, 125, 108, 139),
         ("patches", 176, 196, 34, 68),
     ]
