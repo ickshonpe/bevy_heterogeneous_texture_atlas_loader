@@ -1,0 +1,16 @@
+[package]
+name = "bevy_heterogeneous_texture_atlas_loader"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+keywords = ["bevy", "texture", "atlas", "sprites", "games"]
+categories = ["game-development"]
+repository = "https://github.com/ickshonpe/bevy_heterogeneous_texture_atlas_loader"
+readme = "README.md"
+description = "bevy plugin for loading heterogeneous texture atlases"
+
+[dependencies]
+bevy = { version = "0.6.0", features = [] }
+ron = "0.7"
+serde = { version = "1", features = ["derive"] }
+anyhow = "1.0.4"
