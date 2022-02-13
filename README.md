@@ -29,7 +29,6 @@ You want to load it into Bevy but the sprites are all different sizes.
     ]
 )
 ```
-notes
 * You can call the manifest anything you like, not only `manifest.ron`.
 * The `path` is relative to the root assets directory, not to the manifest file.
 * The `rects` coords are in order min_x, max_x, min_y, max_y.
@@ -39,7 +38,7 @@ notes
   
 
 
-### Add the bevy heterogeneoustextureatlas loader to your Cargo.toml `[dependencies]`
+### Add the bevy heterogeneous texture atlas loader to your Cargo.toml `[dependencies]`
 
 ```
 bevy_heterogeneous_texture_atlas_loader = { github = "https://github.com/ickshonpe/bevy_heterogeneous_texture_atlas_loader" }
