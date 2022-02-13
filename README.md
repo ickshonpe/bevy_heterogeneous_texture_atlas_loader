@@ -7,17 +7,17 @@ Load heterogenous texture atlases according to a RON file manifest.
 # Example
 
 ## Problem
-You have a beautiful sprite sheet `example.png` for your game
+You have a beautiful sprite sheet `example.png` for your game:
 
  ![/assets/example.png](/assets/example.png)
 
-and you want to load it into Bevy but the sprites are all different sizes.  
+You want to load it into Bevy but the sprites are all different sizes.  
   
 
 
 ## Solution
 
-### You create an `examples.ron` manifest file
+### You create a `manifest.ron` manifest file 
 
 ```
 (
@@ -30,6 +30,7 @@ and you want to load it into Bevy but the sprites are all different sizes.
 )
 ```
 notes
+* You can call the manifest anything you like, not only `manifest.ron`.
 * The `path` is relative to the root assets directory, not to the manifest file.
 * The `rects` coords are in order min_x, max_x, min_y, max_y.
 * `rects` is a list not a map to preserve ordering. For this example, in the output texture atlas "yellow" will be texture index 0,
@@ -38,7 +39,7 @@ notes
   
 
 
-### Add to your Cargo.toml `[dependencies]`
+### Add the bevy heterogeneoustextureatlas loader to your Cargo.toml `[dependencies]`
 
 ```
 bevy_heterogeneous_texture_atlas_loader = { github = "https://github.com/ickshonpe/bevy_heterogeneous_texture_atlas_loader" }
@@ -93,7 +94,7 @@ Why are the names of everything so long?
 Crash during loading?
 > There might be a scheduling bug. Not fixed
 
-Example has bugs?
+Example doesn't work?
 > Not tested
 
 
