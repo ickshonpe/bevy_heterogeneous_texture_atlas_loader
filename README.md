@@ -1,23 +1,25 @@
 # Bevy Heterogenous Texture Atlas Loader
 
-Bevy Heterogenous Texture Atlas Loader allows you to load heterogenous texture atlases according to a RON file manifest.  
-  
+Bevy Heterogenous Texture Atlas Loader allows you to load heterogenous texture atlases according to a RON file manifest.
 
-# Example
+
+This works (as far as I can tell), but the implementation could be improved a lot. Any suggestions would be very welcome.
+
+Suports Bevy 0.6
+
+#
+
+## Usage Example
 
 We have a beautiful sprite sheet `example.png` for our game:
 
  ![/assets/example.png](/assets/example.png)
 
-But oh no the sprites are heterogeneous, how to load it?.
-  
+But the sprites have irregular sizes and positions. 
 
+How to load it:
 
-## Solution
-
-Use the Bevy Heterogenous Texture Atlas Loader.
-
-1. Create a `manifest.ron` manifest file
+1. Create a `manifest.ron` manifest file in your assets folder
 
 ```
 (
@@ -30,7 +32,7 @@ Use the Bevy Heterogenous Texture Atlas Loader.
 )
 ```
 * You can call the manifest anything you like, not only `manifest.ron`.
-* The `path` is relative to the root assets directory, not to the manifest file.
+* The `path` is relative to the root assets folder, not to the manifest file.
 * The `rects` coords are in order min_x, max_x, min_y, max_y.
 * `rects` is a list not a map to preserve ordering. The sprite indices in the text atlas are ordered implicitly according to the order of the rects list.
 * If you don't need to look up the sprites by name, use an empty string:
@@ -40,11 +42,9 @@ Use the Bevy Heterogenous Texture Atlas Loader.
         ...
 ```
 
-2. Add dependencies to your `Cargo.toml`
+2. Add the dependency to your `Cargo.toml`
 
 ```
-[dependencies]
-bevy = "0.6"
 bevy_heterogeneous_texture_atlas_loader = "0.1.2"
 ```
 

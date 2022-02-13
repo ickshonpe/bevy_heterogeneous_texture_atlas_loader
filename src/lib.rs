@@ -94,7 +94,6 @@ pub fn heterogeneous_texture_atlas_manifest_events_handler(
                     let mut image_handle = image_handle.clone();
                     image_handle.make_strong(&mut images);
                     let manifest = manifestos.get_mut(&manifest_handle).expect("Manifest asset not found.");
-                    
                     let image = images.get(&image_handle).expect("Image asset not found.");
                     let image_dimensions = Vec2::new(
                         image.texture_descriptor.size.width as f32,
