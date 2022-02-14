@@ -23,11 +23,9 @@ Suports Bevy 0.6
 
 ## Detailed Example
 
-We have a sprite sheet `example.png` for our game,
+* Given a sprite sheet with irregular sized and positioned sprites.
 
- ![/assets/example.png](/assets/example.png)
-
-that has sprites with irregular sizes and positions.
+    ![/assets/example.png](/assets/example.png)
 
 
 1. First create a `manifest.ron` manifest file in your assets folder
@@ -156,8 +154,8 @@ that has sprites with irregular sizes and positions.
 #
 ### Other Questions
 #### "Manifest not found"?
-> You need to keep a strong handle to the manifest,
-otherwise it will be dropped before the texture atlas is created.
+> You need to keep a strong handle to the TextureAtlasManifest,
+otherwise the asset will be dropped before the TextureAtlas is created.
 
 
 
