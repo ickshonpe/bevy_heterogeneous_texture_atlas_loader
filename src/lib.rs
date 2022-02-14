@@ -8,36 +8,30 @@ use serde::Deserialize;
 
 #[derive(Debug, TypeUuid)]
 #[uuid = "b00584ad-0507-44ed-a89c-e6758f3576f6"]
-pub struct HeterogeneousTextureAtlasManifest {
+pub struct TextureAtlasManifest {
     path: String,
-    pub atlas: Handle<TextureAtlas>,
     sprite_rects: Vec<(String, bevy::sprite::Rect)>,
+    pub atlas: Handle<TextureAtlas>,
     pub indices: HashMap<String, usize>
 }   
 
-impl HeterogeneousTextureAtlasManifest {
-    pub fn get(&self, sprite_name: &str) -> usize {
+impl TextureAtlasManifest {
+    pub fn get_index(&self, sprite_name: &str) -> usize {
         self.indices[sprite_name]
     }
 }
 
 #[derive(Debug, Deserialize)]
-pub struct SpriteSheetManifest {
-    pub path: String,
-    pub rects: SheetRects,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct SheetRect {
+pub struct SpriteRect {
     x: u32,
     y: u32,
     w: u32,
     h: u32,
 }
 
-impl From<SheetRect> for NamedSheetRect {
-    fn from(val: SheetRect) -> Self {
-        NamedSheetRect {
+impl From<SpriteRect> for NamedSpriteRect {
+    fn from(val: SpriteRect) -> Self {
+        NamedSpriteRect {
             name: "".into(),
             x: val.x, 
             y: val.y,
@@ -48,7 +42,7 @@ impl From<SheetRect> for NamedSheetRect {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct NamedSheetRect {
+pub struct NamedSpriteRect {
     name: String,
     x: u32,
     y: u32,
@@ -57,21 +51,21 @@ pub struct NamedSheetRect {
 }
 
 #[derive(Debug, Deserialize)]
-pub enum SheetRects {
-    NamedSprites(Vec<NamedSheetRect>),
-    Sprites(Vec<SheetRect>),
+pub enum SpriteRects {
+    NamedSprites(Vec<NamedSpriteRect>),
+    Sprites(Vec<SpriteRect>),
 }
 
-impl From<SheetRects> for Vec<(String, bevy::sprite::Rect)> {
-    fn from(rects: SheetRects) -> Self {
+impl From<SpriteRects> for Vec<(String, bevy::sprite::Rect)> {
+    fn from(rects: SpriteRects) -> Self {
         match rects {
-            SheetRects::NamedSprites(rects) => rects,
-            SheetRects::Sprites(rects) => {
-                rects.into_iter().map(|rect| NamedSheetRect::from(rect)).collect()
+            SpriteRects::NamedSprites(rects) => rects,
+            SpriteRects::Sprites(rects) => {
+                rects.into_iter().map(|rect| NamedSpriteRect::from(rect)).collect()
             },
         }
         .into_iter()
-        .map(|NamedSheetRect { name, x, y, w, h } | (
+        .map(|NamedSpriteRect { name, x, y, w, h } | (
             name,
             bevy::sprite::Rect { 
                 min: vec2(x as f32, y as f32),
@@ -84,18 +78,18 @@ impl From<SheetRects> for Vec<(String, bevy::sprite::Rect)> {
 
 
 #[derive(Default)]
-pub struct HeterogeneousTextureAtlasManifestLoader;
+pub struct TextureAtlasManifestLoader;
 
-impl AssetLoader for HeterogeneousTextureAtlasManifestLoader {
+impl AssetLoader for TextureAtlasManifestLoader {
     fn load<'a>(
         &'a self,
         bytes: &'a [u8],
         load_context: &'a mut LoadContext,
     ) -> BoxedFuture<'a, Result<(), anyhow::Error>> {
         Box::pin(async move {
-            let (path, rects): (String, SheetRects) = ron::de::from_bytes(bytes)?;
+            let (path, rects): (String, SpriteRects) = ron::de::from_bytes(bytes)?;
             let sprite_rects: Vec<(String, bevy::sprite::Rect)> = rects.into();
-            let manifest = HeterogeneousTextureAtlasManifest {
+            let manifest = TextureAtlasManifest {
                 path,
                 atlas: Handle::default(),
                 sprite_rects,
@@ -111,15 +105,15 @@ impl AssetLoader for HeterogeneousTextureAtlasManifestLoader {
     }
 }
 
-pub fn heterogeneous_texture_atlas_manifest_events_handler(
-    mut local: Local<HashMap<Handle<Image>, Handle<HeterogeneousTextureAtlasManifest>>>,
-    mut manifest_events: EventReader<AssetEvent<HeterogeneousTextureAtlasManifest>>,
+pub fn manifest_events_handler(
+    mut local: Local<HashMap<Handle<Image>, Handle<TextureAtlasManifest>>>,
+    mut manifest_events: EventReader<AssetEvent<TextureAtlasManifest>>,
     mut image_events: EventReader<AssetEvent<Image>>,
     asset_server: Res<AssetServer>,
-    mut manifests: ResMut<Assets<HeterogeneousTextureAtlasManifest>>,
+    mut manifests: ResMut<Assets<TextureAtlasManifest>>,
     mut images: ResMut<Assets<Image>>,
     mut atlases: ResMut<Assets<TextureAtlas>>,
-    mut event_writer: EventWriter<HeterogeneousTextureAtlasLoadedEvent>,
+    mut event_writer: EventWriter<TextureAtlasManifestLoadedEvent>,
 ) {
     let image_map = &mut *local;
     for event in manifest_events.iter() {
@@ -160,9 +154,9 @@ pub fn heterogeneous_texture_atlas_manifest_events_handler(
                     let atlas_handle = atlases.add(atlas);
                     manifest.atlas = atlas_handle.clone();
                     manifest_handle.make_strong(&mut manifests);
-                    event_writer.send(HeterogeneousTextureAtlasLoadedEvent { 
-                        manifest: manifest_handle, 
-                        atlas: atlas_handle 
+                    event_writer.send(TextureAtlasManifestLoadedEvent { 
+                        manifest: manifest_handle,
+                        atlas: atlas_handle
                     });
                 }
             },
@@ -172,22 +166,22 @@ pub fn heterogeneous_texture_atlas_manifest_events_handler(
 }
 
 #[derive(Component)]
-pub struct HeterogeneousTextureAtlasLoadedEvent {
-    pub manifest: Handle<HeterogeneousTextureAtlasManifest>, 
+pub struct TextureAtlasManifestLoadedEvent {
+    pub manifest: Handle<TextureAtlasManifest>,
     pub atlas: Handle<TextureAtlas>,
 }
 
-pub struct HeterogeneousTextureAtlasLoaderPlugin;
+pub struct TextureAtlasManifestLoaderPlugin;
 
-impl Plugin for HeterogeneousTextureAtlasLoaderPlugin {
+impl Plugin for TextureAtlasManifestLoaderPlugin {
     fn build(&self, app: &mut App) {
         app
-        .add_event::<HeterogeneousTextureAtlasLoadedEvent>()
-        .add_asset::<HeterogeneousTextureAtlasManifest>()
-        .init_asset_loader::<HeterogeneousTextureAtlasManifestLoader>()
+        .add_event::<TextureAtlasManifestLoadedEvent>()
+        .add_asset::<TextureAtlasManifest>()
+        .init_asset_loader::<TextureAtlasManifestLoader>()
         .add_system_to_stage(
             CoreStage::PreUpdate,
-            heterogeneous_texture_atlas_manifest_events_handler
+            manifest_events_handler
         );
     }
 }
