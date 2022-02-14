@@ -7,7 +7,7 @@ It works, but the implementation could be improved a lot. Any suggestions would 
 Suports Bevy 0.6
 #
 ## Basic usage
-1. Add the `TextureAtlasManifestLoaderPlugin` to your bevy app.
+1. Add the `TextureAtlasManifestLoaderPlugin` to your Bevy App.
 
 
 2. Load the texture atlas manifest using the asset server:
@@ -17,7 +17,7 @@ Suports Bevy 0.6
     The plugin listens for AssetServer events. Once the manifest file is loaded it will automatically begin loading the corresponding image file.
 
 
-3. Once the image file is loaded, it constructs the Texture Atlas and then sends the TextureAtlasManifestLoadedEvent event. A strong handle to the new atlas can be retrieved from this event's `atlas` field.
+3. Once the image file is loaded, it constructs the TextureAtlas and then emits a TextureAtlasManifestLoadedEvent event. A strong handle to the new atlas can be retrieved from that event's `atlas` field.
 
 #
 
