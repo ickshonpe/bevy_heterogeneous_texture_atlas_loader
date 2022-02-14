@@ -64,33 +64,33 @@ that has sprites with irregular sizes and positions.
     (
         "example.png",
         NamedSprites ([
-            {
+            (
                 name: "yellow", 
                 x: 18, 
                 y: 19, 
                 w: 46, 
                 h: 48
-            },
-            {
+            ),
+            (
                 name: "face", 
                 x: 93, 
                 y: 108, 
                 w: 32, 
                 h: 31
-            },
-            {
+            ),
+            (
                 name: "patches", 
                 x: 176, 
                 y: 34, 
                 w: 20, 
                 h: 34
-            },
+            ),
         ])
     )
     ```
     * You can call the manifest anything you like, not only `manifest.ron`.
     * The file path is relative to the root assets folder, not to the manifest file.
-    * The sprites are in a list not a map to preserve ordering. The sprite indices in the ouput ordered implicitly according to the order of the input list.
+    * The sprite indices in the output TextureAtlas are ordered implicitly according to the order of the input list sprite rects.
     * Use `name: ""` to skip naming a sprite in a `NamedSprites` list
 2. Add this crate's dependency to your project's `Cargo.toml` ```[dependencies]``` section
 
