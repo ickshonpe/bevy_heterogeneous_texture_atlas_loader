@@ -24,8 +24,64 @@ impl HeterogeneousTextureAtlasManifest {
 #[derive(Debug, Deserialize)]
 pub struct SpriteSheetManifest {
     pub path: String,
-    pub rects: Vec<(String, u32, u32, u32, u32)>,
+    pub rects: SheetRects,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct SheetRect {
+    x: u32,
+    y: u32,
+    w: u32,
+    h: u32,
+}
+
+impl From<SheetRect> for NamedSheetRect {
+    fn from(val: SheetRect) -> Self {
+        NamedSheetRect {
+            name: "".into(),
+            x: val.x, 
+            y: val.y,
+            w: val.w,
+            h: val.h
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct NamedSheetRect {
+    name: String,
+    x: u32,
+    y: u32,
+    w: u32,
+    h: u32,
+}
+
+#[derive(Debug, Deserialize)]
+pub enum SheetRects {
+    NamedSprites(Vec<NamedSheetRect>),
+    Sprites(Vec<SheetRect>),
+}
+
+impl From<SheetRects> for Vec<(String, bevy::sprite::Rect)> {
+    fn from(rects: SheetRects) -> Self {
+        match rects {
+            SheetRects::NamedSprites(rects) => rects,
+            SheetRects::Sprites(rects) => {
+                rects.into_iter().map(|rect| NamedSheetRect::from(rect)).collect()
+            },
+        }
+        .into_iter()
+        .map(|NamedSheetRect { name, x, y, w, h } | (
+            name,
+            bevy::sprite::Rect { 
+                min: vec2(x as f32, y as f32),
+                max: vec2((x + w - 1) as f32,  (y + h - 1) as f32),
+            }
+        ))
+        .collect()
+    }
+}
+
 
 #[derive(Default)]
 pub struct HeterogeneousTextureAtlasManifestLoader;
@@ -37,16 +93,8 @@ impl AssetLoader for HeterogeneousTextureAtlasManifestLoader {
         load_context: &'a mut LoadContext,
     ) -> BoxedFuture<'a, Result<(), anyhow::Error>> {
         Box::pin(async move {
-            let SpriteSheetManifest { path, rects } = ron::de::from_bytes(bytes)?;
-            let sprite_rects: Vec<(String, bevy::sprite::Rect)> = rects.into_iter()
-                .map(|(name, left, right, bottom, top)| (
-                    name,
-                    bevy::sprite::Rect { 
-                        min: vec2(left as f32, bottom as f32),
-                        max: vec2(right as f32, top as f32),
-                    }
-                ))
-                .collect();
+            let (path, rects): (String, SheetRects) = ron::de::from_bytes(bytes)?;
+            let sprite_rects: Vec<(String, bevy::sprite::Rect)> = rects.into();
             let manifest = HeterogeneousTextureAtlasManifest {
                 path,
                 atlas: Handle::default(),
@@ -68,7 +116,7 @@ pub fn heterogeneous_texture_atlas_manifest_events_handler(
     mut manifest_events: EventReader<AssetEvent<HeterogeneousTextureAtlasManifest>>,
     mut image_events: EventReader<AssetEvent<Image>>,
     asset_server: Res<AssetServer>,
-    mut manifestos: ResMut<Assets<HeterogeneousTextureAtlasManifest>>,
+    mut manifests: ResMut<Assets<HeterogeneousTextureAtlasManifest>>,
     mut images: ResMut<Assets<Image>>,
     mut atlases: ResMut<Assets<TextureAtlas>>,
     mut event_writer: EventWriter<HeterogeneousTextureAtlasLoadedEvent>,
@@ -77,7 +125,7 @@ pub fn heterogeneous_texture_atlas_manifest_events_handler(
     for event in manifest_events.iter() {
         match event {
             AssetEvent::Created { handle: manifest_handle } => {
-                let manifest = manifestos.get_mut(manifest_handle).expect("Manifest asset not found.");
+                let manifest = manifests.get_mut(manifest_handle).expect("Manifest asset not found.");
                 let image_handle: Handle<Image> = asset_server.load(&manifest.path);
                 image_map.insert(image_handle, manifest_handle.clone());
             },
@@ -93,7 +141,7 @@ pub fn heterogeneous_texture_atlas_manifest_events_handler(
                 if let Some(mut manifest_handle) = image_map.remove(image_handle) {
                     let mut image_handle = image_handle.clone();
                     image_handle.make_strong(&mut images);
-                    let manifest = manifestos.get_mut(&manifest_handle).expect("Manifest asset not found.");
+                    let manifest = manifests.get_mut(&manifest_handle).expect("Manifest asset not found.");
                     let image = images.get(&image_handle).expect("Image asset not found.");
                     let image_dimensions = Vec2::new(
                         image.texture_descriptor.size.width as f32,
@@ -111,7 +159,7 @@ pub fn heterogeneous_texture_atlas_manifest_events_handler(
                     }
                     let atlas_handle = atlases.add(atlas);
                     manifest.atlas = atlas_handle.clone();
-                    manifest_handle.make_strong(&mut manifestos);
+                    manifest_handle.make_strong(&mut manifests);
                     event_writer.send(HeterogeneousTextureAtlasLoadedEvent { 
                         manifest: manifest_handle, 
                         atlas: atlas_handle 

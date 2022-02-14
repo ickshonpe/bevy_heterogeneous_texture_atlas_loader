@@ -11,38 +11,77 @@ Suports Bevy 0.6
 
 ## Usage Example
 
-We have a beautiful sprite sheet `example.png` for our game:
+We have a sprite sheet `example.png` for our game,
 
  ![/assets/example.png](/assets/example.png)
 
-But the sprites have irregular sizes and positions. 
+that has sprites with irregular sizes and positions.
 
-How to load it:
+## How to load the sprite sheet
 
 1. Create a `manifest.ron` manifest file in your assets folder
 
 ```
 (
-    path: "example.png",
-    rects: [
-        ("rothko", 16, 64, 19, 67),
-        ("handsome face", 93, 125, 108, 139),
-        ("cyan and peaches", 176, 196, 34, 68),
-    ]
+    "example.png",
+    Sprites ([
+        (
+            x: 18, 
+            y: 19, 
+            w: 46, 
+            h: 48
+        ),
+        (
+            x: 93, 
+            y: 108, 
+            w: 32, 
+            h: 31
+        ),
+        (
+            x: 176, 
+            y: 34, 
+            w: 20, 
+            h: 34
+        ),
+    ])
+)
+```
+Alternatively, you can give each sprite a unique name that can be used to look
+up their TextureAtlas index.
+
+```
+(
+    "example.png",
+    NamedSprites ([
+        {
+            name: "yellow", 
+            x: 18, 
+            y: 19, 
+            w: 46, 
+            h: 48
+        },
+        {
+            name: "face", 
+            x: 93, 
+            y: 108, 
+            w: 32, 
+            h: 31
+        },
+        {
+            name: "patches", 
+            x: 176, 
+            y: 34, 
+            w: 20, 
+            h: 34
+        },
+    ])
 )
 ```
 * You can call the manifest anything you like, not only `manifest.ron`.
-* The `path` is relative to the root assets folder, not to the manifest file.
-* The `rects` coords are in order min_x, max_x, min_y, max_y.
-* `rects` is a list not a map to preserve ordering. The sprite indices in the text atlas are ordered implicitly according to the order of the rects list.
-* If you don't need to look up the sprites by name, use an empty string:
-```
-    rects: [
-        ("", 16, 64, 19, 67),
-        ...
-```
-
-2. Add the dependency to your `Cargo.toml`
+* The file path is relative to the root assets folder, not to the manifest file.
+* The sprites are in a list not a map to preserve ordering. The sprite indices in the ouput ordered implicitly according to the order of the input list.
+* Use `name: ""` to skip naming a sprite in a `NamedSprites` list
+2. Add the BHTAL dependency to your `Cargo.toml`
 
 ```
 bevy_heterogeneous_texture_atlas_loader = "0.1.2"
@@ -99,7 +138,7 @@ fn main() {
     .run();
 }
 ```
-4. Result, lovely
+4. Result
 
  ![/assets/example.png](/assets/beautiful.png)
 
