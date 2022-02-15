@@ -27,8 +27,6 @@ Suports Bevy 0.6
     );
     ```
 
-    
-        
 #
 
 ## Detailed Example
@@ -105,11 +103,11 @@ Suports Bevy 0.6
     * The sprite indices in the output TextureAtlas are ordered implicitly according to the order of the input list sprite rects.
     * Use `name: ""` to skip naming a sprite in a `NamedSprites` list
   
-  
+
 2. Add this crate's dependency to your project's `Cargo.toml` ```[dependencies]``` section
 
     ```
-    bevy_heterogeneous_texture_atlas_loader = "0.1.2"
+    bevy_heterogeneous_texture_atlas_loader = "0.2"
     ```
 
 3. Write the app
