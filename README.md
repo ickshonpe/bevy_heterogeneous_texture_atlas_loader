@@ -10,19 +10,19 @@ Suports Bevy 0.6
 
 2. Load the texture atlas manifest using the asset server:
     ```rust
-    let manifest: Handle<TextureAtlasManifest> = asset_server.load("manifest.ron");
+    let atlas: Handle<TextureAtlas> = asset_server.load("manifest.ron");
     ```
     The plugin will then load the atlas image and create the TextureAtlas asset automatically.
 
     Once the manifest is loaded, the handle can be accessed from the ```.atlas``` field,
-    or directly using the asset path `"manifest.ron#texture_atlas"` like so:
+    or directly using the asset path `"manifest.ron"` like so:
 
     ```rust
     fn some_system(
         assets: Res<Assets<TextureAtlas>>,
         ...
     ) {
-        let atlas = assets.get("manifest.ron#texture_atlas").unwrap();
+        let atlas = assets.get("manifest.ron").unwrap();
         ...
     );
     ```
@@ -114,58 +114,57 @@ Suports Bevy 0.6
 
     ```rust
     use bevy::prelude::*;
-    use bevy_heterogeneous_texture_atlas_loader::*;
+use bevy_heterogeneous_texture_atlas_loader::*;
 
-    fn setup(
-        mut commands: Commands,
-        asset_server: Res<AssetServer>,
-    ) {
-        commands.spawn_bundle(OrthographicCameraBundle::new_2d());
-        let manifest: Handle<TextureAtlasManifest> = asset_server.load("manifest.ron");
-        commands.insert_resource(manifest);
-    }
+fn setup(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+) {
+    commands.spawn_bundle(OrthographicCameraBundle::new_2d());
+    let atlas: Handle<TextureAtlas> = asset_server.load("manifest.ron");
+    commands.insert_resource(atlas);
+}
 
-    fn on_manifest_loaded(
-        mut commands: Commands,
-        mut events: EventReader<AssetEvent<TextureAtlasManifest>>,
-        atlases: Res<Assets<TextureAtlas>>,
-        manifests: Res<Assets<TextureAtlasManifest>>,
-    ) {
-        for event in events.iter() {
-            match event {
-                AssetEvent::Created { handle } => {
-                    if let Some(manifest) = manifests.get(handle) {
-                        let atlas = atlases.get("manifest.ron#texture_atlas").unwrap();
+fn on_manifest_loaded(
+    mut commands: Commands,
+    mut events: EventReader<AssetEvent<TextureAtlas>>,
+    atlases: Res<Assets<TextureAtlas>>,
+) {
+    for event in events.iter() {
+        match event {
+            AssetEvent::Created { handle } => {
+                if let Some(atlas) = atlases.get(handle) {
+                    
+                    commands
+                    .spawn_bundle(SpriteBundle {
+                        texture: atlas.texture.clone(),
+                        ..Default::default()
+                    });
+                    for i in 0..3 {
+                        let target = -200. * Vec3::X + (100. * i as f32 - 100.) * Vec3::Y;
                         commands
-                        .spawn_bundle(SpriteBundle {
-                            texture: atlas.texture.clone(),
+                        .spawn_bundle(SpriteSheetBundle {
+                            sprite: TextureAtlasSprite::new(i),
+                            texture_atlas: handle.clone(),
+                            transform: Transform::from_translation(target),
                             ..Default::default()
                         });
-                        for i in 0..3 {
-                            let target = -200. * Vec3::X + (100. * i as f32 - 100.) * Vec3::Y;
-                            commands
-                            .spawn_bundle(SpriteSheetBundle {
-                                sprite: TextureAtlasSprite::new(i),
-                                texture_atlas: manifest.atlas.clone(),
-                                transform: Transform::from_translation(target),
-                                ..Default::default()
-                            });
-                        }
                     }
-                },
-                _ => {}
-            }
+                }
+            },
+            _ => {}
         }
     }
+}
 
-    fn main() {
-        App::new()
-        .add_plugins(DefaultPlugins)
-        .add_plugin(TextureAtlasManifestLoaderPlugin)
-        .add_startup_system(setup)
-        .add_system(on_manifest_loaded)
-        .run();
-    }
+fn main() {
+    App::new()
+    .add_plugins(DefaultPlugins)
+    .add_plugin(TextureAtlasManifestLoaderPlugin)
+    .add_startup_system(setup)
+    .add_system(on_manifest_loaded)
+    .run();
+}
     ```
 
 4. Result

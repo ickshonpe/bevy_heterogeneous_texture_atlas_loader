@@ -1,25 +1,10 @@
 use std::path::Path;
-
 use bevy::prelude::*;
 use bevy::math::vec2;
-use bevy::reflect::TypeUuid;
 use bevy::utils::HashMap;
 use bevy::asset::{LoadContext, BoxedFuture, LoadedAsset, AssetLoader, AssetPath};
 use bevy::sprite::TextureAtlas;
 use serde::Deserialize;
-
-#[derive(Debug, TypeUuid)]
-#[uuid = "b00584ad-0507-44ed-a89c-e6758f3576f6"]
-pub struct TextureAtlasManifest {
-    pub atlas: Handle<TextureAtlas>,
-    pub named_sprites: HashMap<String, usize>
-}   
-
-impl TextureAtlasManifest {
-    pub fn get_atlas_index(&self, sprite_name: &str) -> usize {
-        self.named_sprites[sprite_name]
-    }
-}
 
 #[derive(Debug, Deserialize)]
 pub struct SpriteRect {
@@ -121,16 +106,9 @@ impl AssetLoader for TextureAtlasManifestLoader {
                     }
                 }
             }
-            let atlas_asset = LoadedAsset::new(texture_atlas).with_dependency(image_asset_path);
-            let atlas_handle = load_context.set_labeled_asset("texture_atlas", atlas_asset);
-
             // create asset
-            let manifest = TextureAtlasManifest {
-                atlas: atlas_handle,
-                named_sprites
-            };
-            let manifest_asset = LoadedAsset::new(manifest);
-            load_context.set_default_asset(manifest_asset);
+            let atlas_asset = LoadedAsset::new(texture_atlas).with_dependency(image_asset_path);
+            load_context.set_default_asset(atlas_asset);
             Ok(())
         })
     }
@@ -139,19 +117,11 @@ impl AssetLoader for TextureAtlasManifestLoader {
         &["ron"]
     }
 }
-
-#[derive(Component)]
-pub struct TextureAtlasManifestLoadedEvent {
-    pub manifest: Handle<TextureAtlasManifest>,
-    pub atlas: Handle<TextureAtlas>,
-}
-
 pub struct TextureAtlasManifestLoaderPlugin;
 
 impl Plugin for TextureAtlasManifestLoaderPlugin {
     fn build(&self, app: &mut App) {
         app
-        .add_asset::<TextureAtlasManifest>()
         .init_asset_loader::<TextureAtlasManifestLoader>();
     }
 }
