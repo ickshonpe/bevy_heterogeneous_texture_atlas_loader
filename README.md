@@ -2,8 +2,6 @@
 
 Bevy Heterogenous Texture Atlas Loader allows you to load heterogenous texture atlases according to a RON file manifest.
 
-It works, but the implementation could be improved a lot. Any suggestions would be very welcome.
-
 Suports Bevy 0.6
 #
 ## Basic usage
@@ -14,11 +12,23 @@ Suports Bevy 0.6
     ```rust
     let manifest: Handle<TextureAtlasManifest> = asset_server.load("manifest.ron");
     ```
-    The plugin listens for AssetServer events. Once the manifest file is loaded it will automatically begin loading the corresponding image file.
+    The plugin will then load the atlas image and create the TextureAtlas asset automatically.
 
+    Once the manifest is loaded, the handle can be accessed from the ```.atlas``` field,
+    or directly using the asset path `"manifest.ron#texture_atlas"` like so:
 
-3. Once the image file is loaded, it constructs the TextureAtlas and then emits a TextureAtlasManifestLoadedEvent event. A strong handle to the new atlas can be retrieved from that event's `atlas` field.
+    ```rust
+    fn some_system(
+        assets: Res<Assets<TextureAtlas>>,
+        ...
+    ) {
+        let atlas = assets.get("manifest.ron#texture_atlas").unwrap();
+        ...
+    );
+    ```
 
+    
+        
 #
 
 ## Detailed Example
@@ -32,8 +42,10 @@ Suports Bevy 0.6
 
     ```
     (
-        "example.png",
-        Sprites ([
+        path: "example.png",
+        width: 256,
+        height: 256,
+        sprites: Sprites ([
             (
                 x: 18, 
                 y: 19, 
@@ -60,8 +72,10 @@ Suports Bevy 0.6
 
     ```
     (
-        "example.png",
-        NamedSprites ([
+        path: "example.png",
+        width: 256,
+        height: 256,
+        sprites: NamedSprites ([
             (
                 name: "yellow", 
                 x: 18, 
@@ -90,6 +104,8 @@ Suports Bevy 0.6
     * The file path is relative to the root assets folder, not to the manifest file.
     * The sprite indices in the output TextureAtlas are ordered implicitly according to the order of the input list sprite rects.
     * Use `name: ""` to skip naming a sprite in a `NamedSprites` list
+  
+  
 2. Add this crate's dependency to your project's `Cargo.toml` ```[dependencies]``` section
 
     ```
@@ -97,7 +113,6 @@ Suports Bevy 0.6
     ```
 
 3. Write the app
-
 
     ```rust
     use bevy::prelude::*;
@@ -112,27 +127,35 @@ Suports Bevy 0.6
         commands.insert_resource(manifest);
     }
 
-    fn on_atlas_loaded(
+    fn on_manifest_loaded(
         mut commands: Commands,
-        mut events: EventReader<TextureAtlasManifestLoadedEvent>,
+        mut events: EventReader<AssetEvent<TextureAtlasManifest>>,
         atlases: Res<Assets<TextureAtlas>>,
+        manifests: Res<Assets<TextureAtlasManifest>>,
     ) {
         for event in events.iter() {
-            let atlas = atlases.get(&event.atlas).unwrap();
-            commands
-            .spawn_bundle(SpriteBundle {
-                texture: atlas.texture.clone(),
-                ..Default::default()
-            });
-            for i in 0..3 {
-                let target = -200. * Vec3::X + (100. * i as f32 - 100.) * Vec3::Y;
-                commands
-                .spawn_bundle(SpriteSheetBundle {
-                    sprite: TextureAtlasSprite::new(i),
-                    texture_atlas: event.atlas.clone(),
-                    transform: Transform::from_translation(target),
-                    ..Default::default()
-                });
+            match event {
+                AssetEvent::Created { handle } => {
+                    if let Some(manifest) = manifests.get(handle) {
+                        let atlas = atlases.get("manifest.ron#texture_atlas").unwrap();
+                        commands
+                        .spawn_bundle(SpriteBundle {
+                            texture: atlas.texture.clone(),
+                            ..Default::default()
+                        });
+                        for i in 0..3 {
+                            let target = -200. * Vec3::X + (100. * i as f32 - 100.) * Vec3::Y;
+                            commands
+                            .spawn_bundle(SpriteSheetBundle {
+                                sprite: TextureAtlasSprite::new(i),
+                                texture_atlas: manifest.atlas.clone(),
+                                transform: Transform::from_translation(target),
+                                ..Default::default()
+                            });
+                        }
+                    }
+                },
+                _ => {}
             }
         }
     }
@@ -142,20 +165,14 @@ Suports Bevy 0.6
         .add_plugins(DefaultPlugins)
         .add_plugin(TextureAtlasManifestLoaderPlugin)
         .add_startup_system(setup)
-        .add_system(on_atlas_loaded)
+        .add_system(on_manifest_loaded)
         .run();
     }
     ```
+
 4. Result
 
     ![/assets/example.png](/assets/beautiful.png)
-
-
-#
-### Other Questions
-#### "Manifest not found"?
-> You need to keep a strong handle to the TextureAtlasManifest,
-otherwise the asset will be dropped before the TextureAtlas is created.
 
 
 

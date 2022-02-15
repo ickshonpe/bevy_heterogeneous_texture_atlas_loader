@@ -1,23 +1,23 @@
+use std::path::Path;
+
 use bevy::prelude::*;
 use bevy::math::vec2;
 use bevy::reflect::TypeUuid;
 use bevy::utils::HashMap;
-use bevy::asset::{LoadContext, BoxedFuture, LoadedAsset, AssetLoader};
+use bevy::asset::{LoadContext, BoxedFuture, LoadedAsset, AssetLoader, AssetPath};
 use bevy::sprite::TextureAtlas;
 use serde::Deserialize;
 
 #[derive(Debug, TypeUuid)]
 #[uuid = "b00584ad-0507-44ed-a89c-e6758f3576f6"]
 pub struct TextureAtlasManifest {
-    path: String,
-    sprite_rects: Vec<(String, bevy::sprite::Rect)>,
     pub atlas: Handle<TextureAtlas>,
-    pub indices: HashMap<String, usize>
+    pub named_sprites: HashMap<String, usize>
 }   
 
 impl TextureAtlasManifest {
-    pub fn get_index(&self, sprite_name: &str) -> usize {
-        self.indices[sprite_name]
+    pub fn get_atlas_index(&self, sprite_name: &str) -> usize {
+        self.named_sprites[sprite_name]
     }
 }
 
@@ -51,10 +51,19 @@ pub struct NamedSpriteRect {
 }
 
 #[derive(Debug, Deserialize)]
-pub enum SpriteRects {
+enum SpriteRects {
     NamedSprites(Vec<NamedSpriteRect>),
     Sprites(Vec<SpriteRect>),
 }
+
+#[derive(Debug, Deserialize)]
+struct Manifest {
+    path: String,
+    width: u32,
+    height: u32,
+    sprites: SpriteRects,
+}
+
 
 impl From<SpriteRects> for Vec<(String, bevy::sprite::Rect)> {
     fn from(rects: SpriteRects) -> Self {
@@ -87,81 +96,47 @@ impl AssetLoader for TextureAtlasManifestLoader {
         load_context: &'a mut LoadContext,
     ) -> BoxedFuture<'a, Result<(), anyhow::Error>> {
         Box::pin(async move {
-            let (path, rects): (String, SpriteRects) = ron::de::from_bytes(bytes)?;
-            let sprite_rects: Vec<(String, bevy::sprite::Rect)> = rects.into();
+            // load manifest data
+            let manifest: Manifest = ron::de::from_bytes(bytes)?;
+            
+            // get the image handle
+            let image_asset_path = AssetPath::new_ref(Path::new(&manifest.path), None);
+            let image_handle: Handle<Image> = load_context.get_handle(image_asset_path.clone());
+
+            // create the texture atlas
+            let mut texture_atlas = TextureAtlas::new_empty(
+                image_handle,
+                manifest.width as f32 * Vec2::X + manifest.height as f32 * Vec2::Y
+                    // Had to comprimise on ergonomics here and demand the image dimensions from the user,
+                    // because with this method we have to create the texture atlas before the image is loaded.
+            );
+            
+            let rects: Vec<(String, bevy::sprite::Rect)> = manifest.sprites.into();
+            let mut named_sprites = HashMap::default();
+            for (name, sprite_rect) in rects.into_iter() {
+                let index = texture_atlas.add_texture(sprite_rect);
+                if name != "" {                    
+                    if let Some(_rect) = named_sprites.insert(name.clone(), index) {
+                        warn!("Sprite name {name} in manifest for texture atlas {} not unique", manifest.path);
+                    }
+                }
+            }
+            let atlas_asset = LoadedAsset::new(texture_atlas).with_dependency(image_asset_path);
+            let atlas_handle = load_context.set_labeled_asset("texture_atlas", atlas_asset);
+
+            // create asset
             let manifest = TextureAtlasManifest {
-                path,
-                atlas: Handle::default(),
-                sprite_rects,
-                indices: HashMap::default()
+                atlas: atlas_handle,
+                named_sprites
             };
-            load_context.set_default_asset(LoadedAsset::new(manifest));
+            let manifest_asset = LoadedAsset::new(manifest);
+            load_context.set_default_asset(manifest_asset);
             Ok(())
         })
     }
 
     fn extensions(&self) -> &[&str] {
         &["ron"]
-    }
-}
-
-pub fn manifest_events_handler(
-    mut local: Local<HashMap<Handle<Image>, Handle<TextureAtlasManifest>>>,
-    mut manifest_events: EventReader<AssetEvent<TextureAtlasManifest>>,
-    mut image_events: EventReader<AssetEvent<Image>>,
-    asset_server: Res<AssetServer>,
-    mut manifests: ResMut<Assets<TextureAtlasManifest>>,
-    mut images: ResMut<Assets<Image>>,
-    mut atlases: ResMut<Assets<TextureAtlas>>,
-    mut event_writer: EventWriter<TextureAtlasManifestLoadedEvent>,
-) {
-    let image_map = &mut *local;
-    for event in manifest_events.iter() {
-        match event {
-            AssetEvent::Created { handle: manifest_handle } => {
-                let manifest = manifests.get_mut(manifest_handle).expect("Manifest asset not found.");
-                let image_handle: Handle<Image> = asset_server.load(&manifest.path);
-                image_map.insert(image_handle, manifest_handle.clone());
-            },
-            _ => {},
-        }
-    }
-    if image_map.is_empty() {
-        return;
-    }
-    for event in image_events.iter() {
-        match event {
-            AssetEvent::Created { handle: image_handle } => {
-                if let Some(mut manifest_handle) = image_map.remove(image_handle) {
-                    let mut image_handle = image_handle.clone();
-                    image_handle.make_strong(&mut images);
-                    let manifest = manifests.get_mut(&manifest_handle).expect("Manifest asset not found.");
-                    let image = images.get(&image_handle).expect("Image asset not found.");
-                    let image_dimensions = Vec2::new(
-                        image.texture_descriptor.size.width as f32,
-                        image.texture_descriptor.size.height as f32
-                    );                    
-                    let mut atlas = TextureAtlas::new_empty(
-                        image_handle.clone(),
-                        image_dimensions
-                    );
-                    for (name, sprite_rect) in manifest.sprite_rects.iter() {
-                        let index = atlas.add_texture(*sprite_rect);
-                        if name != "" {
-                            manifest.indices.insert(name.clone(), index);
-                        }
-                    }
-                    let atlas_handle = atlases.add(atlas);
-                    manifest.atlas = atlas_handle.clone();
-                    manifest_handle.make_strong(&mut manifests);
-                    event_writer.send(TextureAtlasManifestLoadedEvent { 
-                        manifest: manifest_handle,
-                        atlas: atlas_handle
-                    });
-                }
-            },
-            _ => {}
-        }
     }
 }
 
@@ -176,12 +151,7 @@ pub struct TextureAtlasManifestLoaderPlugin;
 impl Plugin for TextureAtlasManifestLoaderPlugin {
     fn build(&self, app: &mut App) {
         app
-        .add_event::<TextureAtlasManifestLoadedEvent>()
         .add_asset::<TextureAtlasManifest>()
-        .init_asset_loader::<TextureAtlasManifestLoader>()
-        .add_system_to_stage(
-            CoreStage::PreUpdate,
-            manifest_events_handler
-        );
+        .init_asset_loader::<TextureAtlasManifestLoader>();
     }
 }
