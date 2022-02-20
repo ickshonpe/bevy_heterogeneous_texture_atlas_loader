@@ -49,7 +49,6 @@ struct Manifest {
     sprites: SpriteRects,
 }
 
-
 impl From<SpriteRects> for Vec<(String, bevy::sprite::Rect)> {
     fn from(rects: SpriteRects) -> Self {
         match rects {
@@ -72,9 +71,9 @@ impl From<SpriteRects> for Vec<(String, bevy::sprite::Rect)> {
 
 
 #[derive(Default)]
-pub struct TextureAtlasManifestLoader;
+pub struct TextureAtlasLoader;
 
-impl AssetLoader for TextureAtlasManifestLoader {
+impl AssetLoader for TextureAtlasLoader {
     fn load<'a>(
         &'a self,
         bytes: &'a [u8],
@@ -97,16 +96,23 @@ impl AssetLoader for TextureAtlasManifestLoader {
             );
             
             let rects: Vec<(String, bevy::sprite::Rect)> = manifest.sprites.into();
-            let mut named_sprites = HashMap::default();
             for (name, sprite_rect) in rects.into_iter() {
                 let index = texture_atlas.add_texture(sprite_rect);
-                if name != "" {                    
-                    if let Some(_rect) = named_sprites.insert(name.clone(), index) {
+                if name != "" {      
+                    let handles = texture_atlas.texture_handles.get_or_insert(HashMap::default());
+                    let mut handle_name = manifest.path.to_owned();
+                    handle_name.push_str("#");
+                    handle_name.push_str(&name);
+                    println!("{handle_name}");
+                    let handle: Handle<Image> = load_context.get_handle(handle_name);
+                    if let Some(_rect) = handles.insert(handle.as_weak(), index) {
                         warn!("Sprite name {name} in manifest for texture atlas {} not unique", manifest.path);
                     }
+                    
                 }
             }
-            // create asset
+
+            // create and return the asset
             let atlas_asset = LoadedAsset::new(texture_atlas).with_dependency(image_asset_path);
             load_context.set_default_asset(atlas_asset);
             Ok(())
@@ -117,11 +123,12 @@ impl AssetLoader for TextureAtlasManifestLoader {
         &["ron"]
     }
 }
-pub struct TextureAtlasManifestLoaderPlugin;
 
-impl Plugin for TextureAtlasManifestLoaderPlugin {
+pub struct TextureAtlasLoaderPlugin;
+
+impl Plugin for TextureAtlasLoaderPlugin {
     fn build(&self, app: &mut App) {
         app
-        .init_asset_loader::<TextureAtlasManifestLoader>();
+        .init_asset_loader::<TextureAtlasLoader>();
     }
 }
