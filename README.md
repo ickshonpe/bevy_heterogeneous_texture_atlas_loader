@@ -57,9 +57,9 @@ Suports Bevy 0.6
         sprites: NamedSprites ([    
             (
                 // use a weak handle with the asset path
-                //      "example.png#yellow" 
+                //      "example.png#rothko" 
                 // to retrieve this sprite's index.
-                name: "yellow",     
+                name: "rothko",     
 
                 // top left y coordinate of the sprite in pixels
                 y: 19,              
