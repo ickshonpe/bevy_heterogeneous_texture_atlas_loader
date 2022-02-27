@@ -5,7 +5,7 @@ Bevy Heterogenous Texture Atlas Loader allows you to load heterogenous texture a
 Suports Bevy 0.6
 #
 ## Basic usage
-1. In your project's `Cargo.toml` ```[dependencies]``` section insert
+1. Add to your project's `Cargo.toml` ```[dependencies]``` section
 
     ```
     bevy_heterogeneous_texture_atlas_loader = "0.5"
