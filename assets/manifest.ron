@@ -2,20 +2,23 @@
     path: "example.png",
     width: 256,
     height: 256,
-    sprites: Sprites([
+    sprites: NamedSprites([
         (
+            name: "rothko",
             x: 18, 
             y: 19, 
             w: 46, 
             h: 48
         ),
         (
+            name: "face",
             x: 93, 
             y: 108, 
             w: 32, 
             h: 31
         ),
         (
+            name: "patches",
             x: 176, 
             y: 34, 
             w: 20, 

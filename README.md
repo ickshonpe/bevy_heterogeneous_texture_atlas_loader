@@ -5,34 +5,45 @@ Bevy Heterogenous Texture Atlas Loader allows you to load heterogenous texture a
 Suports Bevy 0.6
 #
 ## Basic usage
+1. In your project's `Cargo.toml` ```[dependencies]``` section insert
+
+    ```
+    bevy_heterogeneous_texture_atlas_loader = "0.5"
+    ```
+
 1. Add the `TextureAtlasLoaderPlugin` to your Bevy App.
+    ```
+    use bevy_heterogeneous_texture_atlas_loader::*;
+    app.add_plugin(TextureAtlasLoaderPlugin)
+    ```
 
 2. Add the atlas source image and `.ron` manifest to your assets folder.
 
 2. Load the texture atlas manifest using the asset server:
     ```rust
-    let atlas: Handle<TextureAtlas> = asset_server.load("manifest.ron");
+    let atlas: Handle<TextureAtlas> = asset_server.load("<path>.ron");
     ```
     The plugin will then load the atlas image and create the TextureAtlas asset automatically.
 
 #
 
-## Detailed Example
+## The Manifest 
 
-* Given a sprite sheet with irregular sized and positioned sprites.
+* To create a manifest for a sprite sheet with irregular sized and positioned sprites like:
 
     ![/assets/example.png](/assets/example.png)
 
 
-1. First create a `manifest.ron` manifest file in your assets folder.
-    You can give each sprite a unique name that can be used to look
+1. Create a .ron file in your assets folder. 
+
+
+    Each sprite can be given a unique name that can be used to look
     up their TextureAtlas index using a weak `Handle<Image>` with the asset_path 
     `"example.png#sprite_name"`.
 
     ```
     (
-        // Path of the texture atlas source image file relative to
-        // the root assets folder.
+        // Path to the texture atlas source image file 
         path: "example.png",        
 
         // width of the source image in pixels
@@ -112,93 +123,21 @@ Suports Bevy 0.6
     )
     ```
 
-    * You can call the manifest anything you like, not only `manifest.ron`.
-    * The file path is relative to the root assets folder, not to the manifest file.
     * The sprite indices in the output TextureAtlas are ordered implicitly according to the order of the input list sprite rects.
     * Use `name: ""` to skip naming a sprite in a `NamedSprites` list
   
+## Examples
 
-2. Add this crate's dependency to your project's `Cargo.toml` ```[dependencies]``` section
+* `example.rs` 
 
+    Example of loading and displaying a texture atlas. Run with
     ```
-    bevy_heterogeneous_texture_atlas_loader = "0.4"
-    ```
-
-3. Write the app
-
-    ```rust
-    use bevy::prelude::*;
-    use bevy_heterogeneous_texture_atlas_loader::*;
-
-    fn setup(
-        mut commands: Commands,
-        asset_server: Res<AssetServer>,
-    ) {
-        commands.spawn_bundle(OrthographicCameraBundle::new_2d());
-        let atlas: Handle<TextureAtlas> = asset_server.load("manifest.ron");
-        commands.insert_resource(atlas);
-    }
-
-    fn on_loaded(
-        mut commands: Commands,
-        mut events: EventReader<AssetEvent<TextureAtlas>>,
-        atlases: Res<Assets<TextureAtlas>>,
-    ) {
-        for event in events.iter() {
-            match event {
-                AssetEvent::Created { handle } => {
-                    if let Some(atlas) = atlases.get(handle) {
-                        commands
-                        .spawn_bundle(SpriteBundle {
-                            texture: atlas.texture.clone(),
-                            ..Default::default()
-                        });
-                        for (index, &name) in [
-                            "example.png#yellow",
-                            "example.png#face",
-                            "example.png#tpatches",
-                        ].iter().enumerate() {
-                            let target = 
-                                -300. * Vec3::X 
-                                + (100. * index as f32 - 100.) * Vec3::Y 
-                                + 0.25 * Vec3::ONE;
-
-                            commands
-                            .spawn_bundle(SpriteSheetBundle {
-                                sprite: TextureAtlasSprite::new(index),
-                                texture_atlas: handle.clone(),
-                                transform: Transform::from_translation(target),
-                                ..Default::default()
-                            });
-
-                            let index_from_handle = atlas.get_texture_index(&Handle::weak(name.into())).unwrap();
-                            commands
-                            .spawn_bundle(SpriteSheetBundle {
-                                sprite: TextureAtlasSprite::new(index_from_handle),
-                                texture_atlas: handle.clone(),
-                                transform: Transform::from_translation(target + 100. * Vec3::X),
-                                ..Default::default()
-                            });
-                        
-                        }
-                    }
-                },
-                _ => {}
-            }
-        }
-    }
-
-    fn main() {
-        App::new()
-        .add_plugins(DefaultPlugins)
-        .add_plugin(TextureAtlasLoaderPlugin)
-        .add_startup_system(setup)
-        .add_system(on_loaded)
-        .run();
-    }
+    cargo run --example example
     ```
 
-4. Result
+* `bevy_asset_loader.rs`
 
-    ![/assets/example.png](/assets/beautiful.png)
-
+    Example using `bevy_asset_loader` to manage loading. Run with
+    ```
+    cargo run --example bevy_asset_loader
+    ```

@@ -7,7 +7,7 @@ use bevy::sprite::TextureAtlas;
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
-pub struct SpriteRect {
+struct SpriteRect {
     x: u32,
     y: u32,
     w: u32,
@@ -27,7 +27,7 @@ impl From<SpriteRect> for NamedSpriteRect {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct NamedSpriteRect {
+struct NamedSpriteRect {
     name: String,
     x: u32,
     y: u32,
@@ -71,7 +71,7 @@ impl From<SpriteRects> for Vec<(String, bevy::sprite::Rect)> {
 
 
 #[derive(Default)]
-pub struct TextureAtlasLoader;
+struct TextureAtlasLoader;
 
 impl AssetLoader for TextureAtlasLoader {
     fn load<'a>(
@@ -103,7 +103,6 @@ impl AssetLoader for TextureAtlasLoader {
                     let mut handle_name = manifest.path.to_owned();
                     handle_name.push_str("#");
                     handle_name.push_str(&name);
-                    println!("{handle_name}");
                     let handle: Handle<Image> = load_context.get_handle(handle_name);
                     if let Some(_rect) = handles.insert(handle.as_weak(), index) {
                         warn!("Sprite name {name} in manifest for texture atlas {} not unique", manifest.path);
