@@ -16,4 +16,4 @@ serde = { version = "1", features = ["derive"] }
 anyhow = "1.0.4"
 
 [dev-dependencies]
-bevy_asset_loader = "*"
+bevy_asset_loader = "0.9.0"
