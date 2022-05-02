@@ -2,13 +2,14 @@
 
 Bevy Heterogenous Texture Atlas Loader allows you to load heterogenous texture atlases according to a RON file manifest.
 
-Suports Bevy 0.6
+Version 0.6 suports Bevy 0.7, versions < 0.6 support Bevy 0.6.
+
 #
 ## Basic usage
 1. Add to your project's `Cargo.toml` ```[dependencies]``` section
 
     ```
-    bevy_heterogeneous_texture_atlas_loader = "0.5"
+    bevy_heterogeneous_texture_atlas_loader = "0.6.0"
     ```
 
 1. Add the `TextureAtlasLoaderPlugin` to your Bevy App.
