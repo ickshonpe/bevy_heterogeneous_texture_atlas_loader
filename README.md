@@ -2,7 +2,13 @@
 
 Bevy Heterogenous Texture Atlas Loader allows you to load heterogenous texture atlases according to a RON file manifest.
 
-Version 0.6 suports Bevy 0.7, versions < 0.6 support Bevy 0.6.
+## Bevy Compatibility
+
+| version | bevy |
+| ------- | ---- |
+| 0.7     | 0.8  |
+| 0.6     | 0.7  |
+| < 0.6   | 0.6  |
 
 #
 ## Basic usage
@@ -142,3 +148,5 @@ Version 0.6 suports Bevy 0.7, versions < 0.6 support Bevy 0.6.
     ```
     cargo run --example bevy_asset_loader
     ```
+
+    This doesn't work at the moment as `bevy_asset_loader` hasn't been updated to support Bevy 0.8 yet.

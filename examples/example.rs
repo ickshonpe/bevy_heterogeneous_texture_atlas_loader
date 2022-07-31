@@ -5,7 +5,7 @@ fn setup(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) {
-    commands.spawn_bundle(OrthographicCameraBundle::new_2d());
+    commands.spawn_bundle(Camera2dBundle::default());
     let atlas: Handle<TextureAtlas> = asset_server.load("manifest.ron");
     commands.insert_resource(atlas);
 }

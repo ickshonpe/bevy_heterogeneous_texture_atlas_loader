@@ -17,7 +17,7 @@ struct MyTextureAtlas {
 fn spawn_camera(
     mut commands: Commands,
 ) {
-    commands.spawn_bundle(OrthographicCameraBundle::new_2d());
+    commands.spawn_bundle(Camera2dBundle::default());
 }
 
 fn show_atlas(
