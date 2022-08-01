@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_heterogeneous_texture_atlas_loader::*;
-use bevy_asset_loader::*;
+use bevy_asset_loader::prelude::*;
 
 #[derive(Clone, Eq, PartialEq, Debug, Hash)]
 enum GameState {
@@ -62,13 +62,15 @@ fn show_atlas(
 }
 
 fn main() {
-    let mut app = App::new();
-    AssetLoader::new(GameState::Loading)
-    .continue_to_state(GameState::Results)
-    .with_collection::<MyTextureAtlas>()
-    .build(&mut app);
 
-    app.add_state(GameState::Loading)
+    App::new()
+    .add_state(GameState::Loading)
+    .add_loading_state(
+        LoadingState::new(
+        GameState::Loading)
+        .continue_to_state(GameState::Results)
+        .with_collection::<MyTextureAtlas>()
+    )
     .add_plugins(DefaultPlugins)
     .add_plugin(TextureAtlasLoaderPlugin)
     .add_startup_system(spawn_camera)

@@ -148,5 +148,3 @@ Bevy Heterogenous Texture Atlas Loader allows you to load heterogenous texture a
     ```
     cargo run --example bevy_asset_loader
     ```
-
-    This doesn't work at the moment as `bevy_asset_loader` hasn't been updated to support Bevy 0.8 yet.
