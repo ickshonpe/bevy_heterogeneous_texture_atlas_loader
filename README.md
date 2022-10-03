@@ -15,7 +15,7 @@ Bevy Heterogenous Texture Atlas Loader allows you to load heterogenous texture a
 1. Add to your project's `Cargo.toml` ```[dependencies]``` section
 
     ```
-    bevy_heterogeneous_texture_atlas_loader = "0.6.0"
+    bevy_heterogeneous_texture_atlas_loader = "0.7.2"
     ```
 
 1. Add the `TextureAtlasLoaderPlugin` to your Bevy App.
@@ -26,11 +26,20 @@ Bevy Heterogenous Texture Atlas Loader allows you to load heterogenous texture a
 
 2. Add the atlas source image and `.ron` manifest to your assets folder.
 
-2. Load the texture atlas manifest using the asset server:
+3. Load the texture atlas manifest using the asset server:
     ```rust
     let atlas: Handle<TextureAtlas> = asset_server.load("<path>.ron");
     ```
     The plugin will then load the atlas image and create the TextureAtlas asset automatically.
+
+4. The TextureAtlas's sprite indices respect the order of the sprites in the manifest. 
+    So atlas index 0 will be the first sprite in the manifest, 1 the second, and so on.
+    You can also use the `get_texture_index` method to look up the index using an asset path:
+    ```rust
+    atlas.get_texture_index(&Handle::weak("example.png#sprite_name".into()))
+    ```
+
+    which you can see used in `\examples\example.rs`
 
 #
 
