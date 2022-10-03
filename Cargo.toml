@@ -10,10 +10,10 @@ readme = "README.md"
 description = "bevy plugin for loading heterogeneous texture atlases"
 
 [dependencies]
-bevy = { version = "0.8.0", features = [] }
+bevy = { version = "0.8", features = [] }
 ron = "0.8"
 serde = { version = "1", features = ["derive"] }
 anyhow = "1.0.4"
 
 [dev-dependencies]
-bevy_asset_loader = "0.12.0"
+bevy_asset_loader = "0.12.1"
