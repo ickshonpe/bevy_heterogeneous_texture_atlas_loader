@@ -32,8 +32,8 @@ Bevy Heterogenous Texture Atlas Loader allows you to load heterogenous texture a
     ```
     The plugin will then load the atlas image and create the TextureAtlas asset automatically.
 
-4. The TextureAtlas's sprite indices respect the order of the sprites in the manifest. 
-    So atlas index 0 will be the first sprite in the manifest, 1 the second, and so on.
+4. The `TextureAtlas`'s sprite indices respect the order of the sprites in the manifest. 
+    Atlas index 0 will be the first sprite in the manifest, 1 the second, and so on.
     You can also use the `get_texture_index` method to look up the index using an asset path:
     ```rust
     atlas.get_texture_index(&Handle::weak("example.png#sprite_name".into()))
