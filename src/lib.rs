@@ -1,10 +1,10 @@
-use std::path::Path;
-use bevy::prelude::*;
+use bevy::asset::{AssetLoader, AssetPath, BoxedFuture, LoadContext, LoadedAsset};
 use bevy::math::vec2;
-use bevy::utils::HashMap;
-use bevy::asset::{LoadContext, BoxedFuture, LoadedAsset, AssetLoader, AssetPath};
+use bevy::prelude::*;
 use bevy::sprite::TextureAtlas;
+use bevy::utils::HashMap;
 use serde::Deserialize;
+use std::path::Path;
 
 #[derive(Debug, Deserialize)]
 struct SpriteRect {
@@ -18,10 +18,10 @@ impl From<SpriteRect> for NamedSpriteRect {
     fn from(val: SpriteRect) -> Self {
         NamedSpriteRect {
             name: "".into(),
-            x: val.x, 
+            x: val.x,
             y: val.y,
             w: val.w,
-            h: val.h
+            h: val.h,
         }
     }
 }
@@ -38,7 +38,7 @@ struct NamedSpriteRect {
 #[derive(Debug, Deserialize)]
 enum SpriteRects {
     NamedSprites(Vec<NamedSpriteRect>),
-    Sprites(Vec<SpriteRect>),
+    AnonymousSprites(Vec<SpriteRect>),
 }
 
 #[derive(Debug, Deserialize)]
@@ -53,22 +53,24 @@ impl From<SpriteRects> for Vec<(String, bevy::sprite::Rect)> {
     fn from(rects: SpriteRects) -> Self {
         match rects {
             SpriteRects::NamedSprites(rects) => rects,
-            SpriteRects::Sprites(rects) => {
-                rects.into_iter().map(|rect| NamedSpriteRect::from(rect)).collect()
-            },
+            SpriteRects::AnonymousSprites(rects) => rects
+                .into_iter()
+                .map(|rect| NamedSpriteRect::from(rect))
+                .collect(),
         }
         .into_iter()
-        .map(|NamedSpriteRect { name, x, y, w, h } | (
-            name,
-            bevy::sprite::Rect { 
-                min: vec2(x as f32, y as f32),
-                max: vec2((x + w - 1) as f32,  (y + h - 1) as f32),
-            }
-        ))
+        .map(|NamedSpriteRect { name, x, y, w, h }| {
+            (
+                name,
+                bevy::sprite::Rect {
+                    min: vec2(x as f32, y as f32),
+                    max: vec2((x + w - 1) as f32, (y + h - 1) as f32),
+                },
+            )
+        })
         .collect()
     }
 }
-
 
 #[derive(Default)]
 struct TextureAtlasLoader;
@@ -82,7 +84,7 @@ impl AssetLoader for TextureAtlasLoader {
         Box::pin(async move {
             // load manifest data
             let manifest: Manifest = ron::de::from_bytes(bytes)?;
-            
+
             // get the image handle
             let image_asset_path = AssetPath::new_ref(Path::new(&manifest.path), None);
             let image_handle: Handle<Image> = load_context.get_handle(image_asset_path.clone());
@@ -90,24 +92,27 @@ impl AssetLoader for TextureAtlasLoader {
             // create the texture atlas
             let mut texture_atlas = TextureAtlas::new_empty(
                 image_handle,
-                manifest.width as f32 * Vec2::X + manifest.height as f32 * Vec2::Y
-                    // Had to comprimise on ergonomics here and demand the image dimensions from the user,
-                    // because with this method we have to create the texture atlas before the image is loaded.
+                manifest.width as f32 * Vec2::X + manifest.height as f32 * Vec2::Y, // Had to comprimise on ergonomics here and demand the image dimensions from the user,
+                                                                                    // because with this method we have to create the texture atlas before the image is loaded.
             );
-            
+
             let rects: Vec<(String, bevy::sprite::Rect)> = manifest.sprites.into();
             for (name, sprite_rect) in rects.into_iter() {
                 let index = texture_atlas.add_texture(sprite_rect);
-                if name != "" {      
-                    let handles = texture_atlas.texture_handles.get_or_insert(HashMap::default());
+                if name != "" {
+                    let handles = texture_atlas
+                        .texture_handles
+                        .get_or_insert(HashMap::default());
                     let mut handle_name = manifest.path.to_owned();
                     handle_name.push_str("#");
                     handle_name.push_str(&name);
                     let handle: Handle<Image> = load_context.get_handle(handle_name);
                     if let Some(_rect) = handles.insert(handle.as_weak(), index) {
-                        warn!("Sprite name {name} in manifest for texture atlas {} not unique", manifest.path);
+                        warn!(
+                            "Sprite name {name} in manifest for texture atlas {} not unique",
+                            manifest.path
+                        );
                     }
-                    
                 }
             }
 
@@ -127,7 +132,6 @@ pub struct TextureAtlasLoaderPlugin;
 
 impl Plugin for TextureAtlasLoaderPlugin {
     fn build(&self, app: &mut App) {
-        app
-        .init_asset_loader::<TextureAtlasLoader>();
+        app.init_asset_loader::<TextureAtlasLoader>();
     }
 }

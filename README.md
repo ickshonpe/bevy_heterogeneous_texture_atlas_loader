@@ -14,29 +14,29 @@ Bevy Heterogenous Texture Atlas Loader allows you to load heterogenous texture a
 ## Basic usage
 1. Add to your project's `Cargo.toml` ```[dependencies]``` section
 
-    ```
+    ```toml
     bevy_heterogeneous_texture_atlas_loader = "0.7.2"
     ```
 
 1. Add the `TextureAtlasLoaderPlugin` to your Bevy App.
-    ```
+    ```rust
     use bevy_heterogeneous_texture_atlas_loader::*;
-    app.add_plugin(TextureAtlasLoaderPlugin)
+    app.add_plugin(TextureAtlasLoaderPlugin);
     ```
 
 2. Add the atlas source image and `.ron` manifest to your assets folder.
 
 3. Load the texture atlas manifest using the asset server:
     ```rust
-    let atlas: Handle<TextureAtlas> = asset_server.load("<path>.ron");
+    let texture_atlas: Handle<TextureAtlas> = asset_server.load("<path>.ron");
     ```
     The plugin will then load the atlas image and create the TextureAtlas asset automatically.
 
 4. The `TextureAtlas`'s sprite indices respect the order of the sprites in the manifest. 
     Atlas index 0 will be the first sprite in the manifest, 1 the second, and so on.
-    You can also use the `get_texture_index` method to look up the index using an asset path:
+    You can also use the `TextureAtlas::get_texture_index` method to look up the index using an asset path:
     ```rust
-    atlas.get_texture_index(&Handle::weak("example.png#sprite_name".into()))
+    texture_atlas.get_texture_index(&Handle::weak("example.png#sprite_name".into()))
     ```
 
     which you can see used in `\examples\example.rs`
@@ -52,12 +52,18 @@ Bevy Heterogenous Texture Atlas Loader allows you to load heterogenous texture a
 
 1. Create a .ron file in your assets folder. 
 
+    
+    The sprite indices in the output TextureAtlas are ordered implicitly according to the order of the input list sprite rects.
 
-    Each sprite can be given a unique name that can be used to look
+    The `sprites` field has `NamedSprites` and `AnonymousSprites` variants.
+
+*   `NamedSprites` can be given a unique name that can be used to look
     up their TextureAtlas index using a weak `Handle<Image>` with the asset_path 
     `"example.png#sprite_name"`.
 
-    ```
+    Use `name: ""` to skip naming a sprite in a `NamedSprites` list
+
+    ```rust
     (
         // Path to the texture atlas source image file 
         path: "example.png",        
@@ -74,14 +80,14 @@ Bevy Heterogenous Texture Atlas Loader allows you to load heterogenous texture a
             (
                 // use a weak handle with the asset path
                 //      "example.png#rothko" 
-                // to retrieve this sprite's index.
-                name: "rothko",     
+                // to retrieve this sprite's index using TextureAtlas::get_texture_index.
+                name: "rothko",  
+
+                // top left x coordinate of the sprite in pixels
+                x: 18,           
 
                 // top left y coordinate of the sprite in pixels
                 y: 19,              
-
-                // top left x coordinate of the sprite in pixels
-                x: 18,              
 
                 // width of the sprite in pixels
                 w: 46,              
@@ -106,14 +112,14 @@ Bevy Heterogenous Texture Atlas Loader allows you to load heterogenous texture a
         ])
     )
     ```
-    You can omit the names of the sprites if you don't need them:
-    ```
+* If you don't need names for the sprites, use the `AnonymousSprites` variant:
+    ```rust
     (
         path: "example.png",
         width: 256,
         height: 256,
-        // Sprites variant accessible only by usize index.
-        sprites: Sprites ([         
+        // AnonymousSprites variant sprites are accessible only by their index.
+        sprites: AnonymousSprites ([         
             (    
                 // sprite at atlas index 0
                 x: 18, 
@@ -138,11 +144,15 @@ Bevy Heterogenous Texture Atlas Loader allows you to load heterogenous texture a
         ])
     )
     ```
-
-    * The sprite indices in the output TextureAtlas are ordered implicitly according to the order of the input list sprite rects.
-    * Use `name: ""` to skip naming a sprite in a `NamedSprites` list
   
 ## Examples
+
+* `minimal.rs`
+
+    Loads a texture atlas and cycles through its textures. Run with
+    ```
+    cargo run --example minimal
+    ```
 
 * `example.rs` 
 
