@@ -11,9 +11,9 @@ description = "bevy plugin for loading heterogeneous texture atlases"
 
 [dependencies]
 bevy = { version = "0.8", features = [] }
-ron = "0.8"
-serde = { version = "1", features = ["derive"] }
-anyhow = "1"
+ron = "0.8.0"
+serde = { version = "1.0.145", features = ["derive"] }
+anyhow = "1.0.65"
 
 [dev-dependencies]
-bevy_asset_loader = "0.12"
+bevy_asset_loader = "0.12.1"
