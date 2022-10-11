@@ -130,6 +130,7 @@ fn set_texture_atlas_size(
                         }
                     }
                 }
+                unsized_atlases.remove(image_handle);
             }
         }
     }
