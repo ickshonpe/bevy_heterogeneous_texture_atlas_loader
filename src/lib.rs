@@ -1,7 +1,6 @@
-use bevy::asset::{AssetLoader, AssetPath, BoxedFuture, LoadContext, LoadedAsset, AssetPathId};
+use bevy::asset::{AssetLoader, AssetPath, BoxedFuture, LoadContext, LoadedAsset};
 use bevy::math::vec2;
 use bevy::prelude::*;
-use bevy::reflect::GetPath;
 use bevy::sprite::TextureAtlas;
 use bevy::utils::{HashMap, HashSet};
 use serde::Deserialize;
