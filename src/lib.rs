@@ -32,7 +32,6 @@ impl From<Sprite> for (String, bevy::sprite::Rect) {
                 max: vec2((x + w - 1) as f32, (y + h - 1) as f32),
             },
         )
-        
     }
 }
 
@@ -54,10 +53,7 @@ impl AssetLoader for TextureAtlasLoader {
             let image_handle: Handle<Image> = load_context.get_handle(image_asset_path.clone());
 
             // create the texture atlas
-            let mut texture_atlas = TextureAtlas::new_empty(
-                image_handle,
-                -Vec2::ONE
-            );
+            let mut texture_atlas = TextureAtlas::new_empty(image_handle, -Vec2::ONE);
 
             for (name, sprite_rect) in manifest.sprites.into_iter().map(|sprite| sprite.into()) {
                 let index = texture_atlas.add_texture(sprite_rect);
@@ -65,7 +61,8 @@ impl AssetLoader for TextureAtlasLoader {
                     let handles = texture_atlas
                         .texture_handles
                         .get_or_insert(HashMap::default());
-                    let asset_path = AssetPath::new(manifest.path.clone().into(), Some(name.clone()));
+                    let asset_path =
+                        AssetPath::new(manifest.path.clone().into(), Some(name.clone()));
                     let handle: Handle<Image> = load_context.get_handle(asset_path);
                     if let Some(_rect) = handles.insert(handle.as_weak(), index) {
                         warn!(
@@ -99,31 +96,38 @@ fn set_texture_atlas_size(
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
     for atlas_asset_event in atlas_asset_events.iter() {
-        if let  AssetEvent::Created { handle: texture_atlas_handle } = atlas_asset_event {
+        if let AssetEvent::Created {
+            handle: texture_atlas_handle,
+        } = atlas_asset_event
+        {
             if let Some(texture_atlas) = texture_atlases.get(texture_atlas_handle) {
                 if texture_atlas.size.x < 0. {
                     if let Some(image) = images.get(&texture_atlas.texture) {
                         let texture_atlas = texture_atlases.get_mut(texture_atlas_handle).unwrap();
                         texture_atlas.size = image.size();
                     } else {
-                        unsized_atlases.entry(texture_atlas.texture.clone_weak())
+                        unsized_atlases
+                            .entry(texture_atlas.texture.clone_weak())
                             .or_insert_with(HashSet::default)
                             .insert(texture_atlas_handle.clone_weak());
                     }
                 }
             }
         }
-    }    
+    }
 
     for image_asset_event in image_asset_events.iter() {
-        if let AssetEvent::Created { handle: image_handle } = image_asset_event { 
+        if let AssetEvent::Created {
+            handle: image_handle,
+        } = image_asset_event
+        {
             if let Some(atlases) = unsized_atlases.get_mut(image_handle) {
                 for atlas_handle in atlases.drain() {
                     if let Some(texture_atlas) = texture_atlases.get(&atlas_handle) {
                         if texture_atlas.size.x < 0. {
                             let texture_atlas = texture_atlases.get_mut(&atlas_handle).unwrap();
                             texture_atlas.size = images.get(image_handle).unwrap().size();
-                        } 
+                        }
                     }
                 }
             }
@@ -135,9 +139,7 @@ pub struct TextureAtlasLoaderPlugin;
 
 impl Plugin for TextureAtlasLoaderPlugin {
     fn build(&self, app: &mut App) {
-        app
-        .init_asset_loader::<TextureAtlasLoader>()
-        .add_system(set_texture_atlas_size)
-        ;
+        app.init_asset_loader::<TextureAtlasLoader>()
+            .add_system(set_texture_atlas_size);
     }
 }
