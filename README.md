@@ -6,7 +6,7 @@ Bevy Heterogenous Texture Atlas Loader allows you to load heterogenous texture a
 
 | version | bevy |
 | ------- | ---- |
-| 0.7     | 0.8  |
+| 0.7+    | 0.8  |
 | 0.6     | 0.7  |
 | < 0.6   | 0.6  |
 
@@ -15,7 +15,7 @@ Bevy Heterogenous Texture Atlas Loader allows you to load heterogenous texture a
 1. Add to your project's `Cargo.toml` ```[dependencies]``` section
 
     ```toml
-    bevy_heterogeneous_texture_atlas_loader = "0.8.1"
+    bevy_heterogeneous_texture_atlas_loader = "0.9"
     ```
 
 1. Add the `TextureAtlasLoaderPlugin` to your Bevy App.
@@ -52,31 +52,19 @@ Bevy Heterogenous Texture Atlas Loader allows you to load heterogenous texture a
 
 1. Create a .ron file in your assets folder. 
 
-    
     The sprite indices in the output TextureAtlas are ordered implicitly according to the order of the input list sprite rects.
 
-    The `sprites` field has `NamedSprites` and `AnonymousSprites` variants.
-
-*   `NamedSprites` can be given a unique name that can be used to look
+*   The `name` field is used to give a sprite a unique name that can be used to look
     up their TextureAtlas index using a weak `Handle<Image>` with the asset_path 
     `"example.png#sprite_name"`.
-
-    Use `name: ""` to skip naming a sprite in a `NamedSprites` list
 
     ```rust
     (
         // Path to the texture atlas source image file 
         path: "example.png",        
 
-        // width of the source image in pixels
-        width: 256,                
-
-        // height of the source image in pixels 
-        height: 256,              
-
-        // NamedSprites variant allows you give each sprite an identifying 
-        // asset path.  
-        sprites: NamedSprites ([    
+        // List of sprites        
+        sprites: [    
             (
                 // use a weak handle with the asset path
                 //      "example.png#rothko" 
@@ -112,14 +100,12 @@ Bevy Heterogenous Texture Atlas Loader allows you to load heterogenous texture a
         ])
     )
     ```
-* If you don't need names for the sprites, use the `AnonymousSprites` variant:
+* If you don't need names for the sprites, you can leave out the `name` field:
     ```rust
     (
         path: "example.png",
-        width: 256,
-        height: 256,
-        // AnonymousSprites variant sprites are accessible only by their index.
-        sprites: AnonymousSprites ([         
+
+        sprites:[         
             (    
                 // sprite at atlas index 0
                 x: 18, 
@@ -127,21 +113,8 @@ Bevy Heterogenous Texture Atlas Loader allows you to load heterogenous texture a
                 w: 46, 
                 h: 48
             ),
-            (                       
-                // sprite at atlas index 1
-                x: 93, 
-                y: 108, 
-                w: 32, 
-                h: 31
-            ),
-            (                       
-                // sprite at atlas index 2
-                x: 176, 
-                y: 34, 
-                w: 20, 
-                h: 34
-            ),
-        ])
+            // ...
+        ]
     )
     ```
   

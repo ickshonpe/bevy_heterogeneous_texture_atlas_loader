@@ -1,8 +1,6 @@
 (
     path: "example.png",
-    width: 256,
-    height: 256,
-    sprites: AnonymousSprites([
+    sprites: [
         (
             x: 18, 
             y: 19, 
@@ -21,5 +19,5 @@
             w: 20, 
             h: 34
         ),
-    ])
+    ]
 )

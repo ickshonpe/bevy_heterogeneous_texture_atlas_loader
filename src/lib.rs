@@ -1,33 +1,15 @@
-use bevy::asset::{AssetLoader, AssetPath, BoxedFuture, LoadContext, LoadedAsset};
+use bevy::asset::{AssetLoader, AssetPath, BoxedFuture, LoadContext, LoadedAsset, AssetPathId};
 use bevy::math::vec2;
 use bevy::prelude::*;
+use bevy::reflect::GetPath;
 use bevy::sprite::TextureAtlas;
-use bevy::utils::HashMap;
+use bevy::utils::{HashMap, HashSet};
 use serde::Deserialize;
 use std::path::Path;
 
 #[derive(Debug, Deserialize)]
-struct SpriteRect {
-    x: u32,
-    y: u32,
-    w: u32,
-    h: u32,
-}
-
-impl From<SpriteRect> for NamedSpriteRect {
-    fn from(val: SpriteRect) -> Self {
-        NamedSpriteRect {
-            name: "".into(),
-            x: val.x,
-            y: val.y,
-            w: val.w,
-            h: val.h,
-        }
-    }
-}
-
-#[derive(Debug, Deserialize)]
-struct NamedSpriteRect {
+struct Sprite {
+    #[serde(default)]
     name: String,
     x: u32,
     y: u32,
@@ -36,39 +18,22 @@ struct NamedSpriteRect {
 }
 
 #[derive(Debug, Deserialize)]
-enum SpriteRects {
-    NamedSprites(Vec<NamedSpriteRect>),
-    AnonymousSprites(Vec<SpriteRect>),
-}
-
-#[derive(Debug, Deserialize)]
 struct Manifest {
     path: String,
-    width: u32,
-    height: u32,
-    sprites: SpriteRects,
+    sprites: Vec<crate::Sprite>,
 }
 
-impl From<SpriteRects> for Vec<(String, bevy::sprite::Rect)> {
-    fn from(rects: SpriteRects) -> Self {
-        match rects {
-            SpriteRects::NamedSprites(rects) => rects,
-            SpriteRects::AnonymousSprites(rects) => rects
-                .into_iter()
-                .map(|rect| NamedSpriteRect::from(rect))
-                .collect(),
-        }
-        .into_iter()
-        .map(|NamedSpriteRect { name, x, y, w, h }| {
-            (
-                name,
-                bevy::sprite::Rect {
-                    min: vec2(x as f32, y as f32),
-                    max: vec2((x + w - 1) as f32, (y + h - 1) as f32),
-                },
-            )
-        })
-        .collect()
+impl From<Sprite> for (String, bevy::sprite::Rect) {
+    fn from(sprite_rect: Sprite) -> Self {
+        let Sprite { name, x, y, w, h } = sprite_rect;
+        (
+            name,
+            bevy::sprite::Rect {
+                min: vec2(x as f32, y as f32),
+                max: vec2((x + w - 1) as f32, (y + h - 1) as f32),
+            },
+        )
+        
     }
 }
 
@@ -92,21 +57,17 @@ impl AssetLoader for TextureAtlasLoader {
             // create the texture atlas
             let mut texture_atlas = TextureAtlas::new_empty(
                 image_handle,
-                manifest.width as f32 * Vec2::X + manifest.height as f32 * Vec2::Y, // Had to comprimise on ergonomics here and demand the image dimensions from the user,
-                                                                                    // because with this method we have to create the texture atlas before the image is loaded.
+                -Vec2::ONE
             );
 
-            let rects: Vec<(String, bevy::sprite::Rect)> = manifest.sprites.into();
-            for (name, sprite_rect) in rects.into_iter() {
+            for (name, sprite_rect) in manifest.sprites.into_iter().map(|sprite| sprite.into()) {
                 let index = texture_atlas.add_texture(sprite_rect);
-                if name != "" {
+                if !name.is_empty() {
                     let handles = texture_atlas
                         .texture_handles
                         .get_or_insert(HashMap::default());
-                    let mut handle_name = manifest.path.to_owned();
-                    handle_name.push_str("#");
-                    handle_name.push_str(&name);
-                    let handle: Handle<Image> = load_context.get_handle(handle_name);
+                    let asset_path = AssetPath::new(manifest.path.clone().into(), Some(name.clone()));
+                    let handle: Handle<Image> = load_context.get_handle(asset_path);
                     if let Some(_rect) = handles.insert(handle.as_weak(), index) {
                         warn!(
                             "Sprite name {name} in manifest for texture atlas {} not unique",
@@ -128,10 +89,56 @@ impl AssetLoader for TextureAtlasLoader {
     }
 }
 
+#[derive(Default, Deref, DerefMut)]
+struct UnsizedAtlases(HashMap<Handle<Image>, HashSet<Handle<TextureAtlas>>>);
+
+fn set_texture_atlas_size(
+    mut unsized_atlases: Local<UnsizedAtlases>,
+    mut atlas_asset_events: EventReader<AssetEvent<TextureAtlas>>,
+    mut image_asset_events: EventReader<AssetEvent<Image>>,
+    images: Res<Assets<Image>>,
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+) {
+    for atlas_asset_event in atlas_asset_events.iter() {
+        if let  AssetEvent::Created { handle: texture_atlas_handle } = atlas_asset_event {
+            if let Some(texture_atlas) = texture_atlases.get(texture_atlas_handle) {
+                if texture_atlas.size.x < 0. {
+                    if let Some(image) = images.get(&texture_atlas.texture) {
+                        let texture_atlas = texture_atlases.get_mut(texture_atlas_handle).unwrap();
+                        texture_atlas.size = image.size();
+                    } else {
+                        unsized_atlases.entry(texture_atlas.texture.clone_weak())
+                            .or_insert_with(HashSet::default)
+                            .insert(texture_atlas_handle.clone_weak());
+                    }
+                }
+            }
+        }
+    }    
+
+    for image_asset_event in image_asset_events.iter() {
+        if let AssetEvent::Created { handle: image_handle } = image_asset_event { 
+            if let Some(atlases) = unsized_atlases.get_mut(image_handle) {
+                for atlas_handle in atlases.drain() {
+                    if let Some(texture_atlas) = texture_atlases.get(&atlas_handle) {
+                        if texture_atlas.size.x < 0. {
+                            let texture_atlas = texture_atlases.get_mut(&atlas_handle).unwrap();
+                            texture_atlas.size = images.get(image_handle).unwrap().size();
+                        } 
+                    }
+                }
+            }
+        }
+    }
+}
+
 pub struct TextureAtlasLoaderPlugin;
 
 impl Plugin for TextureAtlasLoaderPlugin {
     fn build(&self, app: &mut App) {
-        app.init_asset_loader::<TextureAtlasLoader>();
+        app
+        .init_asset_loader::<TextureAtlasLoader>()
+        .add_system(set_texture_atlas_size)
+        ;
     }
 }

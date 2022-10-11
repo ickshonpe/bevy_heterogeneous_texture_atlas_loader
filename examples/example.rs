@@ -38,7 +38,6 @@ fn on_loaded(
                             transform: Transform::from_translation(target),
                             ..Default::default()
                         });
-
                         let index_from_handle =
                             atlas.get_texture_index(&Handle::weak(name.into())).unwrap();
                         commands.spawn_bundle(SpriteSheetBundle {
