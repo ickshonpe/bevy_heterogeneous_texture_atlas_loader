@@ -89,8 +89,6 @@ impl AssetLoader for TextureAtlasLoader {
 
             // create and return the asset
             let atlas_asset = LoadedAsset::new(texture_atlas).with_dependency(image_asset_path);
-            
-            
             let mut loading = LOADING.lock().unwrap();
             loading
                 .entry(image_handle.clone_weak())
