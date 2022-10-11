@@ -1,5 +1,9 @@
 # Bevy Heterogenous Texture Atlas Loader
 
+[![crates.io](https://img.shields.io/crates/v/bevy_heterogeneous_texture_atlas_loader)](https://crates.io/crates/bevy_heterogeneous_texture_atlas_loader)
+[![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](https://github.com/ickshonpe/bevy_heterogeneous_texture_atlas_loader)
+[![crates.io](https://img.shields.io/crates/d/bevy_heterogeneous_texture_atlas_loader)](https://crates.io/crates/bevy_heterogeneous_texture_atlas_loader)
+
 Bevy Heterogenous Texture Atlas Loader allows you to load heterogenous texture atlases from a RON file manifest.
 
 ## Bevy Compatibility
