@@ -13,44 +13,37 @@ fn on_loaded(
     atlases: Res<Assets<TextureAtlas>>,
 ) {
     for event in events.iter() {
-        match event {
-            AssetEvent::Created { handle } => {
-                if let Some(atlas) = atlases.get(handle) {
-                    commands.spawn_bundle(SpriteBundle {
-                        texture: atlas.texture.clone(),
+        if let AssetEvent::Created { handle } = event {
+            if let Some(atlas) = atlases.get(handle) {
+                commands.spawn_bundle(SpriteBundle {
+                    texture: atlas.texture.clone(),
+                    ..Default::default()
+                });
+                for (index, &name) in [
+                    "rothko",
+                    "face",
+                    "patches",
+                ].iter().enumerate() {
+                    let target = -300. * Vec3::X
+                        + (100. * index as f32 - 100.) * Vec3::Y
+                        + 0.25 * Vec3::ONE;
+                    commands.spawn_bundle(SpriteSheetBundle {
+                        sprite: TextureAtlasSprite::new(index),
+                        texture_atlas: handle.clone(),
+                        transform: Transform::from_translation(target),
                         ..Default::default()
                     });
-                    for (index, &name) in [
-                        "example.png#rothko",
-                        "example.png#face",
-                        "example.png#patches",
-                    ]
-                    .iter()
-                    .enumerate()
-                    {
-                        let target = -300. * Vec3::X
-                            + (100. * index as f32 - 100.) * Vec3::Y
-                            + 0.25 * Vec3::ONE;
-
-                        commands.spawn_bundle(SpriteSheetBundle {
-                            sprite: TextureAtlasSprite::new(index),
-                            texture_atlas: handle.clone(),
-                            transform: Transform::from_translation(target),
-                            ..Default::default()
-                        });
-                        let index_from_handle =
-                            atlas.get_texture_index(&Handle::weak(name.into())).unwrap();
-                        commands.spawn_bundle(SpriteSheetBundle {
-                            sprite: TextureAtlasSprite::new(index_from_handle),
-                            texture_atlas: handle.clone(),
-                            transform: Transform::from_translation(target + 100. * Vec3::X),
-                            ..Default::default()
-                        });
-                    }
+                    let index_from_handle =
+                        atlas.get_texture_index(&Handle::weak(name.into())).unwrap();
+                    commands.spawn_bundle(SpriteSheetBundle {
+                        sprite: TextureAtlasSprite::new(index_from_handle),
+                        texture_atlas: handle.clone(),
+                        transform: Transform::from_translation(target + 100. * Vec3::X),
+                        ..Default::default()
+                    });
                 }
             }
-            _ => {}
-        }
+        }            
     }
 }
 

@@ -19,7 +19,7 @@ Bevy Heterogenous Texture Atlas Loader allows you to load heterogenous texture a
 1. Add to your project's `Cargo.toml` ```[dependencies]``` section
 
     ```toml
-    bevy_heterogeneous_texture_atlas_loader = "0.9.2"
+    bevy_heterogeneous_texture_atlas_loader = "0.9.3"
     ```
 
 1. Add the `TextureAtlasLoaderPlugin` to your Bevy App.
@@ -40,7 +40,7 @@ Bevy Heterogenous Texture Atlas Loader allows you to load heterogenous texture a
     Atlas index 0 will be the first sprite in the manifest, 1 the second, and so on.
     You can also use the `TextureAtlas::get_texture_index` method to look up the index using an asset path:
     ```rust
-    texture_atlas.get_texture_index(&Handle::weak("example.png#sprite_name".into()))
+    texture_atlas.get_texture_index(&Handle::weak("sprite_name".into()))
     ```
 
     which you can see used in `\examples\example.rs`
@@ -60,7 +60,7 @@ Bevy Heterogenous Texture Atlas Loader allows you to load heterogenous texture a
 
 *   The `name` field is used to give a sprite a unique name that can be used to look
     up their TextureAtlas index using a weak `Handle<Image>` with the asset_path 
-    `"example.png#sprite_name"`.
+    `"sprite_name"`.
 
     ```rust
     (
@@ -70,8 +70,7 @@ Bevy Heterogenous Texture Atlas Loader allows you to load heterogenous texture a
         // List of sprites        
         sprites: [    
             (
-                // use a weak handle with the asset path
-                //      "example.png#rothko" 
+                // use a handle with the asset path "rothko" 
                 // to retrieve this sprite's index using TextureAtlas::get_texture_index.
                 name: "rothko",  
 
@@ -101,7 +100,7 @@ Bevy Heterogenous Texture Atlas Loader allows you to load heterogenous texture a
                 w: 20, 
                 h: 34
             ),
-        ])
+        ]
     )
     ```
 * If you don't need names for the sprites, you can leave out the `name` field:
@@ -116,6 +115,13 @@ Bevy Heterogenous Texture Atlas Loader allows you to load heterogenous texture a
                 y: 19, 
                 w: 46, 
                 h: 48
+            ),
+             (
+                // sprite at atlas index 1
+                x: 93, 
+                y: 108, 
+                w: 32, 
+                h: 31
             ),
             // ...
         ]

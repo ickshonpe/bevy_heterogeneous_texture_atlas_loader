@@ -29,9 +29,9 @@ fn show_atlas(
         ..Default::default()
     });
     let asset_paths = [
-        "example.png#rothko",
-        "example.png#face",
-        "example.png#patches",
+        "rothko",
+        "face",
+        "patches",
     ];
     for (index, &name) in asset_paths.iter().enumerate() {
         let target = -300. * Vec3::X + (100. * index as f32 - 100.) * Vec3::Y + 0.25 * Vec3::ONE;

@@ -72,10 +72,7 @@ impl AssetLoader for TextureAtlasLoader {
                     let handles = texture_atlas
                         .texture_handles
                         .get_or_insert(HashMap::default());
-                    let asset_path =
-                        AssetPath::new(manifest.path.clone().into(), Some(name.clone()));
-                    let handle: Handle<Image> = load_context.get_handle(asset_path);
-                    if let Some(_rect) = handles.insert(handle.as_weak(), index) {
+                    if let Some(_rect) = handles.insert(Handle::weak(name.clone().into()), index) {
                         warn!(
                             "Sprite name {name} in manifest for texture atlas {} not unique",
                             manifest.path
@@ -111,10 +108,7 @@ fn set_texture_atlas_size(
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
     for image_asset_event in image_asset_events.iter() {
-        if let AssetEvent::Created {
-            handle: image_handle,
-        } = image_asset_event
-        {
+        if let AssetEvent::Created {handle: image_handle} = image_asset_event {
             let mut loading = LOADING.lock().unwrap();
             if let Some(atlases) = loading.get_mut(image_handle) {
                 for atlas_handle in atlases.drain() {
