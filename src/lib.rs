@@ -59,7 +59,7 @@ impl AssetLoader for TextureAtlasLoader {
             let image_handle: Handle<Image> = load_context.get_handle(image_asset_path.clone());
 
             // create the texture atlas
-            // image not loaded yet, set size to one pixel.
+            // image not loaded yet, set the atlas size to one pixel temporarily.
             let mut texture_atlas = TextureAtlas::new_empty(image_handle, Vec2::splat(1.));
 
             for (name, sprite_rect) in manifest.sprites.into_iter().map(|sprite| sprite.into()) {
