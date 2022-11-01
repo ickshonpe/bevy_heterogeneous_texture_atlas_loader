@@ -19,7 +19,7 @@ Bevy Heterogenous Texture Atlas Loader allows you to load heterogenous texture a
 1. Add to your project's `Cargo.toml` ```[dependencies]``` section
 
     ```toml
-    bevy_heterogeneous_texture_atlas_loader = "0.9.3"
+    bevy_heterogeneous_texture_atlas_loader = "0.9.4"
     ```
 
 1. Add the `TextureAtlasLoaderPlugin` to your Bevy App.
@@ -140,6 +140,13 @@ Bevy Heterogenous Texture Atlas Loader allows you to load heterogenous texture a
 * `example.rs` 
 
     Example of loading and displaying a texture atlas. Run with
+    ```
+    cargo run --example example
+    ```
+
+ `two.rs` 
+
+    Anpther example of loading and displaying texture atlases. Run with
     ```
     cargo run --example example
     ```
