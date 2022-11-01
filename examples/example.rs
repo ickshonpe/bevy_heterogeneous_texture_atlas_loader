@@ -19,14 +19,9 @@ fn on_loaded(
                     texture: atlas.texture.clone(),
                     ..Default::default()
                 });
-                for (index, &name) in [
-                    "rothko",
-                    "face",
-                    "patches",
-                ].iter().enumerate() {
-                    let target = -300. * Vec3::X
-                        + (100. * index as f32 - 100.) * Vec3::Y
-                        + 0.25 * Vec3::ONE;
+                for (index, &name) in ["rothko", "face", "patches"].iter().enumerate() {
+                    let target =
+                        -300. * Vec3::X + (100. * index as f32 - 100.) * Vec3::Y + 0.25 * Vec3::ONE;
                     commands.spawn_bundle(SpriteSheetBundle {
                         sprite: TextureAtlasSprite::new(index),
                         texture_atlas: handle.clone(),
@@ -43,7 +38,7 @@ fn on_loaded(
                     });
                 }
             }
-        }            
+        }
     }
 }
 

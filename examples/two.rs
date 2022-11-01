@@ -9,7 +9,9 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         commands.spawn_bundle(SpriteSheetBundle {
             sprite: TextureAtlasSprite::new(i),
             texture_atlas: atlas.clone(),
-            transform: Transform::from_translation( (-100. + i as f32 * 100.) * Vec3::X + 50. * Vec3::Y),
+            transform: Transform::from_translation(
+                (-100. + i as f32 * 100.) * Vec3::X + 50. * Vec3::Y,
+            ),
             ..Default::default()
         });
     }
@@ -19,7 +21,9 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         commands.spawn_bundle(SpriteSheetBundle {
             sprite: TextureAtlasSprite::new(i),
             texture_atlas: atlas.clone(),
-            transform: Transform::from_translation( (-50. + i as f32 * 100.) * Vec3::X - 50. * Vec3::Y),
+            transform: Transform::from_translation(
+                (-50. + i as f32 * 100.) * Vec3::X - 50. * Vec3::Y,
+            ),
             ..Default::default()
         });
     }

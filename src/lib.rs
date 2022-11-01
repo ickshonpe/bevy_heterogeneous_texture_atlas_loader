@@ -3,15 +3,13 @@ use bevy::math::vec2;
 use bevy::prelude::*;
 use bevy::sprite::TextureAtlas;
 use bevy::utils::HashMap;
+use lazy_static::*;
 use serde::Deserialize;
 use std::path::Path;
 use std::sync::Mutex;
-use lazy_static::*;
 
 lazy_static! {
-    static ref UNSIZED_ATLAS_LIST: Mutex<
-    Vec<Handle<TextureAtlas>>
-    > = Mutex::new(vec![]);
+    static ref UNSIZED_ATLAS_LIST: Mutex<Vec<Handle<TextureAtlas>>> = Mutex::new(vec![]);
 }
 
 #[derive(Debug, Deserialize)]
@@ -62,7 +60,7 @@ impl AssetLoader for TextureAtlasLoader {
 
             // create the texture atlas
             // image not loaded yet, set size to one pixel.
-            let mut texture_atlas = TextureAtlas::new_empty(image_handle.clone(), Vec2::splat(1.));
+            let mut texture_atlas = TextureAtlas::new_empty(image_handle, Vec2::splat(1.));
 
             for (name, sprite_rect) in manifest.sprites.into_iter().map(|sprite| sprite.into()) {
                 let index = texture_atlas.add_texture(sprite_rect);
@@ -83,8 +81,11 @@ impl AssetLoader for TextureAtlasLoader {
 
             // create and return the asset
             let atlas_asset = LoadedAsset::new(texture_atlas).with_dependency(image_asset_path);
-            UNSIZED_ATLAS_LIST.lock().unwrap().push(texture_atlas_handle.clone_weak());
-            
+            UNSIZED_ATLAS_LIST
+                .lock()
+                .unwrap()
+                .push(texture_atlas_handle.clone_weak());
+
             load_context.set_default_asset(atlas_asset);
             Ok(())
         })
@@ -116,7 +117,6 @@ fn set_texture_atlas_size(
             false
         }
     });
-
 }
 
 pub struct TextureAtlasLoaderPlugin;
