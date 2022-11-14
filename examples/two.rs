@@ -2,11 +2,11 @@ use bevy::prelude::*;
 use bevy_heterogeneous_texture_atlas_loader::*;
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn_bundle(Camera2dBundle::default());
+    commands.spawn(Camera2dBundle::default());
     let atlas: Handle<TextureAtlas> = asset_server.load("manifest.ron");
 
     for i in 0..3 {
-        commands.spawn_bundle(SpriteSheetBundle {
+        commands.spawn(SpriteSheetBundle {
             sprite: TextureAtlasSprite::new(i),
             texture_atlas: atlas.clone(),
             transform: Transform::from_translation(
@@ -18,7 +18,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     let atlas: Handle<TextureAtlas> = asset_server.load("another.ron");
     for i in 0..2 {
-        commands.spawn_bundle(SpriteSheetBundle {
+        commands.spawn(SpriteSheetBundle {
             sprite: TextureAtlasSprite::new(i),
             texture_atlas: atlas.clone(),
             transform: Transform::from_translation(

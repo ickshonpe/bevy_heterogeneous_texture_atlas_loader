@@ -28,12 +28,12 @@ struct Manifest {
     sprites: Vec<crate::Sprite>,
 }
 
-impl From<Sprite> for (String, bevy::sprite::Rect) {
+impl From<Sprite> for (String, bevy::math::Rect) {
     fn from(sprite_rect: Sprite) -> Self {
         let Sprite { name, x, y, w, h } = sprite_rect;
         (
             name,
-            bevy::sprite::Rect {
+            bevy::math::Rect {
                 min: vec2(x as f32, y as f32),
                 max: vec2((x + w - 1) as f32, (y + h - 1) as f32),
             },
@@ -105,7 +105,6 @@ fn set_texture_atlas_size(
         if let Some(texture_atlas) = texture_atlases.get_mut(texture_atlas_handle) {
             if let Some(texture) = images.get(&texture_atlas.texture) {
                 texture_atlas.size = texture.size();
-
                 // texture atlas size set, remove it from the list
                 false
             } else {

@@ -8,11 +8,12 @@ Bevy Heterogenous Texture Atlas Loader allows you to load heterogenous texture a
 
 ## Bevy Compatibility
 
-| version | bevy |
-| ------- | ---- |
-| 0.7+    | 0.8  |
-| 0.6     | 0.7  |
-| < 0.6   | 0.6  |
+| version    | bevy |
+| ---------- | ---- |
+| 0.10       | 0.9 |
+| 0.7 to 0.9 | 0.8  |
+| 0.6        | 0.7  |
+| < 0.6      | 0.6  |
 
 #
 ## Basic usage
@@ -146,7 +147,7 @@ Bevy Heterogenous Texture Atlas Loader allows you to load heterogenous texture a
 
  `two.rs` 
 
-    Anpther example of loading and displaying texture atlases. Run with
+    Another example of loading and displaying texture atlases. Run with
     ```
     cargo run --example example
     ```
